@@ -10,7 +10,7 @@ int main() {
 
     // --- Testing User Logic ---
     
-    Student s1("0", "jay@mytru.ca", "11111", "Jay");
+    Student s1("0", "jay@mytru.ca", "11111", "Jay", "CS");
     Tutor t1("1", "Kevin@mytru.ca", "22222", "Kevin");
     
     // Use pointers to avoid object slicing when storing derived classes in base container
