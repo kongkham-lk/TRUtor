@@ -75,3 +75,4 @@ Makefile
 *.code-workspace
 out/
 build/
+logs/

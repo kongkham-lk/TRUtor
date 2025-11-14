@@ -4,7 +4,7 @@
 #include "model/User.h"
 #include "model/Student.h"
 #include "model/Tutor.h"
-#include "authentication/AuthService.h"
+#include "service/AuthService.h"
 
 using namespace std;
 
