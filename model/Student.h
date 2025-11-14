@@ -13,7 +13,7 @@ private:
     string major;
 
 public:
-    Student(string id, const string& email, const string& password, const string& name); // Constructor, invoke when signup
+    Student(string id, const string& email, const string& password, const string& name, const string& major); // Constructor, invoke when signup
 
     const string& getMajor() const;
     void setMajor(const string& major);

@@ -4,8 +4,9 @@
 using namespace std;
 using namespace chrono;
 
-Student::Student(string id, const string& email, const string& password, const string& name)
+Student::Student(string id, const string& email, const string& password, const string& name, const string& major)
     : User(id, email, password, name, 0) {
+    this->major = major;
 }
 
 const string& Student::getMajor() const {

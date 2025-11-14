@@ -39,3 +39,33 @@
 
 # debug information files
 *.dwo
+
+# ---- CLion / JetBrains ----
+.idea/
+cmake-build-debug/
+cmake-build-release/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+
+# ---- CMake ----
+cmake_install.cmake
+Makefile
+
+# ---- Build outputs ----
+*.o
+*.obj
+*.dll
+*.exe
+*.so
+*.out
+
+# ---- MacOS ----
+.DS_Store
+
+# ---- Generic C++ ----
+*.a
+*.lib
+*.pch
+*.pdb
+*.dSYM/

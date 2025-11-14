@@ -16,7 +16,7 @@ private:
     string email;
     string password;
     string name;
-    int role; // 0 if student, 1 if tutor, (OPTIONAL) 2 if both student and tutor
+    int role; // 0 if student, 1 if tutor
     set<string> subjects;
     system_clock::time_point createdAt;
 
