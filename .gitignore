@@ -69,3 +69,10 @@ Makefile
 *.pch
 *.pdb
 *.dSYM/
+
+.vs/
+.vscode/
+*.code-workspace
+out/
+build/
+logs/

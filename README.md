@@ -20,21 +20,21 @@ sudo apt-get install cmake build-essential
 
 ## Compilation Instructions
 
-#### 1. Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/kongkham-lk/TRUtor.git
 cd TRUtor
 ```
 
-#### 2. Create Build Directory
+### 2. Create Build Directory
 
 ```bash
 mkdir build
 cd build
 ```
 
-#### 3. Generate Build Files with CMake
+### 3. Generate Build Files with CMake
 
 ```bash
 cmake ..
