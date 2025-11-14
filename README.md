@@ -40,7 +40,13 @@ cd build
 cmake ..
 ```
 
-### 4. Compile the Project
+#### 4. Compile and Run the Project
+
+You have two options to build the project: using CMake (recommended) or a single g++ command (quick build).
+
+**Option A — CMake (recommended)**
+
+<ins>*Compile the Project:*</ins>
 
 ```bash
 # macOS / Linux
@@ -50,42 +56,50 @@ cmake --build .
 make
 ```
 
-### 5. Run the Application
+<ins>*Run the Application:*</ins>
 
 ```bash
-# macOS / Linux
+# If you used CMake (default target name `TRUtor`)
 ./TRUtor
 
-# Windows (from build directory)
+# Windows (from CMake build directory)
 ./Debug/TRUtor.exe
 # or
 ./Release/TRUtor.exe
 ```
 
-## CMake Commands Reference
+**Option B — Single-command build (Bash/zsh)**
 
-| Command | Description |
-|---------|-------------|
-| `cmake ..` | Generate build files from parent directory |
-| `cmake --build .` | Build the project (platform-independent) |
-| `cmake --build . --config Release` | Build in Release mode (optimized) |
-| `make clean` | Clean build artifacts (Linux/macOS) |
-| `rm -rf build && mkdir build && cd build && cmake .. && cmake --build .` | Full clean rebuild |
+<ins>*Compile the Project:*</ins>
+
+```bash
+g++ -std=c++11 $(find . -name "*.cpp" ! -path "*/CMakeFiles/*" ! -path "*/cmake-build-*/*") -o main
+```
+This finds all `.cpp` files recursively and compiles them into a single executable named `main`. It excludes generated CMake files and common build directories.
+
+<ins>*Run the Application:*</ins>
+
+```bash
+# If you used the single-command g++ build (executable `main`)
+./main
+```
 
 ## Features Implemented
 
-### Architecture
-- **Model Classes** - Organized data models representing core entities (User, Student, Tutor) with clear separation of concerns and object-oriented design
-- **Service Classes** - Business logic and service layer handling operations like user management, session booking, and messaging functionality
-- **IUser Interface** - Abstract interface defining the contract for all user types, ensuring consistent implementation of user methods across derived classes
+| Structure | Description |
+|---------|-------------|
+| `Model Classes` | Organized data models representing core entities (User, Student, Tutor) with clear separation of concerns and object-oriented design |
+| `Service Classes` | Business logic and service layer handling operations like user management, session booking, and messaging functionality |
+| `IUser Interface` | Base class with role-based hierarchy, storing user credentials (email, password), profile information (name, ID), and creation timestamps |
 
-### Features
-- **User Class** - Base class with role-based hierarchy, storing user credentials (email, password), profile information (name, ID), and creation timestamps
-- **Student Class** - Derived from User class representing student users with student-specific properties and role identifier (role = 0)
-- **Tutor Class** - Derived from User class representing tutor users with tutor-specific properties and role identifier (role = 1)
-- **Role Identification** - System to distinguish between students (role 0) and tutors (role 1), enabling role-based access control and differentiated functionality
-- **User Profile Management** - Capture and manage user information including name, email, password, and account creation timestamps
-- **User Authentication** - Email and password-based authentication system for user verification and security
-- **Login Session** - Session tracking for authenticated users, maintaining login state and user context during application runtime
-- **Course Booking Session Management** - Manage and track tutoring sessions/appointments booked between students and tutors, including session scheduling and availability
-- **Message System** - Inter-user messaging system enabling students and tutors to communicate, send queries, and exchange information
+| Feature | Description |
+|---------|-------------|
+| `User Class` | Organized data models representing core entities (User, Student, Tutor) with clear separation of concerns and object-oriented design |
+| `Student Class` | Derived from User class representing student users with student-specific properties and role identifier (role = 0) |
+| `Tutor Class` | Derived from User class representing tutor users with tutor-specific properties and role identifier (role = 1) |
+| `Role Identification` | System to distinguish between students (role 0) and tutors (role 1), enabling role-based access control and differentiated functionality |
+| `User Profile` | Capture and manage user information including name, email, password, and account creation timestamps |
+| `User Authentication` | Email and password-based authentication system for user verification and security |
+| `Login Session` | Session tracking for authenticated users, maintaining login state and user context during application runtime |
+| `Course Booking` | Manage and track tutoring sessions/appointments booked between students and tutors, including session scheduling and availability |
+| `Message System` | Inter-user messaging system enabling students and tutors to communicate, send queries, and exchange information |
