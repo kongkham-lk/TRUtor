@@ -155,7 +155,7 @@ int main() {
 
             break;
         }
-        case 4: {  // NEW CASE for MessageService test
+        case 4: {  // MessageService test
             cout << "\n--- DEV: Running MessageService tests ---\n";
             MessageService msg;
             time_t t = time(0);
@@ -171,7 +171,7 @@ int main() {
 
             msg.deleteMessagesBetween(1, 2);
             cout << "Deleted messages between 1 and 2.\n";
-            cout << "--- MessageService test finished ---\n\n";
+            cout << "--- end of messageService tests ---\n\n";
 
             break;
         }
