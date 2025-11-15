@@ -7,6 +7,7 @@
 #include "service/AuthService.h"
 #include "model/Course.h"
 #include "service/CourseService.h"
+#include "service/messageService.h"
 
 using namespace std;
 
@@ -76,9 +77,10 @@ int main() {
         cout << "1. Sign Up (Student)\n";
         cout << "2. Sign Up (Tutor)\n";
         cout << "3. (DEV) Test Course / CourseService\n";
-        cout << "4. Login\n";
-        cout << "5. Exit\n";
-        cout << "Choose one of the above options (1-5) : ";
+        cout << "4. Messages Test\n";
+        cout << "5. Login\n";
+        cout << "6. Exit\n";
+        cout << "Choose one of the above options (1-6) : ";
         cin >> option;
 
         switch (option) {
@@ -153,8 +155,28 @@ int main() {
 
             break;
         }
+        case 4: {  // NEW CASE for MessageService test
+            cout << "\n--- DEV: Running MessageService tests ---\n";
+            MessageService msg;
+            time_t t = time(0);
+            msg.createMessage(1, 2, "Hello", t);
+            msg.createMessage(2, 1, "Hi", t);
 
-        case 4: {
+            auto msgs = msg.getMessagesBetween(1, 2);
+            for (const auto& m : msgs)
+                cout << m.messageId << ": " << m.content << endl;
+
+            int id = msg.fetchMessageIdFromDb(1, 2, t);
+            cout << "Fetched message ID: " << id << endl;
+
+            msg.deleteMessagesBetween(1, 2);
+            cout << "Deleted messages between 1 and 2.\n";
+            cout << "--- MessageService test finished ---\n\n";
+
+            break;
+        }
+
+        case 5: {
             cout << "\n-------------------- Login --------------------\n";
             cout << "Enter Email: ";
             cin >> email;
@@ -180,7 +202,7 @@ int main() {
             break;
         }
 
-        case 5:
+        case 6:
             cout << "Exiting TRUtor system.\n";
             return 0;
 
@@ -217,7 +239,7 @@ void showStudentMenu(const Student& student, AuthService& auth) {
                 break;
 
                 // Inside showStudentMenu or when testing student messages
-            case 2:  // Messages
+            case 2: {  // Messages
                 cout << "\n---------------------Your Messages---------------------\n";
 
                 // Your MessageService test
@@ -236,7 +258,8 @@ void showStudentMenu(const Student& student, AuthService& auth) {
                 msg.deleteMessagesBetween(1, 2);
                 cout << "Deleted messages between 1 and 2." << endl;
 
-                break;
+                break;  // remember the break inside the block
+            }
 
             case 3:
                 cout << "\n------------------- Tutoring Sessions -------------------\n";
