@@ -1,6 +1,7 @@
 #include "MessageService.h"
 #include <iostream>
 #include <ctime>
+#include <string>
 
 // create Message with constructor variables
 void MessageService::createMessage(int senderId, int receiverId, string content, time_t timeStamp)
