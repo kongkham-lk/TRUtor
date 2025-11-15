@@ -1,3 +1,6 @@
+#ifndef MESSAGESERVICE_H
+#define MESSAGESERVICE_H
+
 #include <string>
 #include <ctime>
 #include <list>
@@ -30,4 +33,6 @@ private:
 	list<Message> messages;
 
 };
+
+#endif // MESSAGESERVICE_H
 
