@@ -5,8 +5,8 @@
 #include "model/Student.h"
 #include "model/Tutor.h"
 #include "service/AuthService.h"
-#include "Course.h"
-#include "CourseService.h"
+#include "model/Course.h"
+#include "service/CourseService.h"
 
 using namespace std;
 

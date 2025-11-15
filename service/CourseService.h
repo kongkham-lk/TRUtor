@@ -1,7 +1,7 @@
 #ifndef COURSE_SERVICE_H
 #define COURSE_SERVICE_H
 
-#include "Course.h"
+#include "../model/Course.h"
 #include <string>
 #include <vector>
 
