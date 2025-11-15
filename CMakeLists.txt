@@ -6,7 +6,11 @@ set(CMAKE_CXX_STANDARD 20)
 # Auto-detect all .cpp and .h files recursively
 file(GLOB_RECURSE SOURCES
         ${PROJECT_SOURCE_DIR}/*.cpp
+        ${PROJECT_SOURCE_DIR}/model/*.cpp
+        ${PROJECT_SOURCE_DIR}/service/*.cpp
+        ${PROJECT_SOURCE_DIR}/controller/*.cpp
 )
+
 
 # Remove generated CMake files from SOURCES
 foreach(FILE ${SOURCES})

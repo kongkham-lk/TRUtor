@@ -12,7 +12,7 @@ AuthService::AuthService()
 
 // Check if email already used
 bool AuthService::userExistsByEmail(const string& email) const {
-    ifstream file("logs/users.txt");
+    ifstream file("users.txt");
     if (!file.is_open()) return false;
 
     string id, em, pw, name, major;
@@ -26,7 +26,7 @@ bool AuthService::userExistsByEmail(const string& email) const {
 
 // Simple ID generator: S1, S2 or T1, T2...
 string AuthService::generateId(int role) const {
-    ifstream file("logs/users.txt");
+    ifstream file("users.txt");
     char prefix = (role == 0 ? 'S' : 'T');
     int maxNum = 0;
 
@@ -55,7 +55,7 @@ bool AuthService::signUpStudent(const string& email,const string& password,const
 
     string id = generateId(0);   // generate student ID
 
-    ofstream file("logs/users.txt", ios::app);
+    ofstream file("users.txt", ios::app);
     if (!file.is_open()) return false; //if file cannot be opened
 
     file << id << " " << email << " " << password << " " << name << " " << 0 << " " << major << "\n"; //save to file
@@ -69,7 +69,7 @@ bool AuthService::signUpTutor(const string& email,const string& password,const s
 
     string id = generateId(1);  // generate tutor ID
 
-    ofstream file("logs/users.txt", ios::app);
+    ofstream file("users.txt", ios::app);
     if (!file.is_open()) return false; //if file cannot be opened
 
     file << id << " " << email << " " << password << " " << name << " " << 1 << " " << "null" << "\n";   //save to file
@@ -79,7 +79,7 @@ bool AuthService::signUpTutor(const string& email,const string& password,const s
 
 // Login logic
 bool AuthService::login(const string& email,const string& password) {
-    ifstream file("logs/users.txt");
+    ifstream file("users.txt");
     if (!file.is_open()) return false; //if file cannot be opened
 
     string id, em, pw, name, major;  //major is unused (null) for tutor
@@ -89,8 +89,8 @@ bool AuthService::login(const string& email,const string& password) {
         if (em == email && pw == password) {
             //store current logged in user info
             loggedInUserId = id;
-            loggedInUserRole = role; 
-            saveSession(); //save session 
+            loggedInUserRole = role;
+            saveSession(); //save session
             return true;
         }
     }
@@ -125,8 +125,8 @@ Student AuthService::currentStudent() const {
     if (!isLoggedIn() || loggedInUserRole != 0)
         throw runtime_error("It is not a student account");
 
-    ifstream file("logs/users.txt"); // open users file
-    if (!file.is_open()) throw runtime_error("Cannot open users file."); 
+    ifstream file("users.txt"); // open users file
+    if (!file.is_open()) throw runtime_error("Cannot open users file.");
 
     string id, em, pw, name, major;
     int role;
@@ -143,9 +143,9 @@ Student AuthService::currentStudent() const {
 // Load the current tutor
 Tutor AuthService::currentTutor() const {
     if (!isLoggedIn() || loggedInUserRole != 1)
-        throw runtime_error("Not a tutor account"); 
+        throw runtime_error("Not a tutor account");
 
-    ifstream file("logs/users.txt"); // open users file
+    ifstream file("users.txt"); // open users file
     if (!file.is_open()) throw runtime_error("Cannot open users file.");
 
     string id, em, pw, name, major;
@@ -160,9 +160,9 @@ Tutor AuthService::currentTutor() const {
     throw runtime_error("Tutor not found");
 }
 
-// load session from logs/session.txt
+// load session from session.txt
 void AuthService::loadSession() {
-    ifstream file("logs/session.txt");
+    ifstream file("session.txt");
     if (!file.is_open()) { //if file cannot be opened
         loggedInUserId = "";
         loggedInUserRole = -1;
@@ -183,9 +183,9 @@ void AuthService::loadSession() {
     loggedInUserRole = stoi(roleStrin); //convert string role to int
 }
 
-// save session to logs/session.txt
+// save session to session.txt
 void AuthService::saveSession() const {
-    ofstream file("logs/session.txt");
+    ofstream file("session.txt");
     if (!file.is_open()) return;
 
     file << loggedInUserId << "\n" << loggedInUserRole << "\n"; // save ID and role
@@ -193,5 +193,5 @@ void AuthService::saveSession() const {
 
 // clear session file
 void AuthService::clearSession() const {
-    ofstream file("logs/session.txt", ios::trunc); // open session file in truncate mode to clear it
+    ofstream file("session.txt", ios::trunc); // open session file in truncate mode to clear it
 }
