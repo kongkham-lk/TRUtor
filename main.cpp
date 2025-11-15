@@ -5,6 +5,8 @@
 #include "model/Student.h"
 #include "model/Tutor.h"
 #include "service/AuthService.h"
+#include "model/Course.h"
+#include "service/CourseService.h"
 
 using namespace std;
 
@@ -68,86 +70,122 @@ int main() {
     // -------------------------------
     while (true) {
         int option;
+        string email, password, name, major;
 
         cout << "\n---------------------------- Authentication Menu ---------------------------\n";
         cout << "1. Sign Up (Student)\n";
         cout << "2. Sign Up (Tutor)\n";
-        cout << "3. Login\n";
-        cout << "4. Exit\n";
-        cout << "Choose one of the above options (1-4) : ";
+        cout << "3. (DEV) Test Course / CourseService\n";
+        cout << "4. Login\n";
+        cout << "5. Exit\n";
+        cout << "Choose one of the above options (1-5) : ";
         cin >> option;
 
-        string email, password, name, major;
-
         switch (option) {
-            case 1: {
-                cout << "\n-------------------- Student Sign Up --------------------\n";
-                cout << "Enter Email: ";
-                cin >> email;
-                cout << "Enter Password: ";
-                cin >> password;
-                cout << "Full Name (mixed case with no spaces): ";
-                cin >> name;
-                cout << "Enter your major: ";
-                cin >> major;
+        case 1: {
+            cout << "\n-------------------- Student Sign Up --------------------\n";
+            cout << "Enter Email: ";
+            cin >> email;
+            cout << "Enter Password: ";
+            cin >> password;
+            cout << "Full Name (mixed case with no spaces): ";
+            cin >> name;
+            cout << "Enter your major: ";
+            cin >> major;
 
-                if (auth.signUpStudent(email, password, name, major))
-                    cout << "Student account created!\n";
-                else
-                    cout << "Error: Email already exists.\n";
+            if (auth.signUpStudent(email, password, name, major))
+                cout << "Student account created!\n";
+            else
+                cout << "Error: Email already exists.\n";
 
+            break;
+        }
+
+        case 2: {
+            cout << "\n-------------------- Tutor Sign Up --------------------\n";
+            cout << "Enter Email: ";
+            cin >> email;
+            cout << "Enter Password: ";
+            cin >> password;
+            cout << "Full Name (mixed case with no spaces): ";
+            cin >> name;
+
+            if (auth.signUpTutor(email, password, name))
+                cout << "Tutor account created!\n";
+            else
+                cout << "\n\nERROR : Email already exists.\n\n";
+
+            break;
+        }
+
+        case 3: {
+            // ---------- Course / CourseService Tests ----------
+            cout << "\n--- DEV: Running CourseService tests ---\n";
+
+            CourseService cs;
+
+            // Test createCourse
+            Course c1("C101", "Intro to C++", "Basics of C++ programming.");
+            cs.createCourse(c1);
+
+            // Test getCourse
+            Course fetched = cs.getCourse("C101");
+            cout << "Fetched course: ID=" << fetched.getId()
+                << ", Title=\"" << fetched.getTitle()
+                << "\", Desc=\"" << fetched.getDescription() << "\"\n";
+
+            // Test updateCourse
+            fetched.setTitle("Intro to Modern C++");
+            fetched.setDescription("Updated description: modern features and best practices.");
+            cs.updateCourse(fetched);
+
+            // Test getAllCourses
+            vector<Course> all = cs.getAllCourses();
+            cout << "\nAll courses returned by getAllCourses():\n";
+            for (const auto& course : all) {
+                cout << " - ID=" << course.getId()
+                    << ", Title=\"" << course.getTitle() << "\"\n";
+            }
+
+            // Test deleteCourse
+            cs.deleteCourse("C101");
+            cout << "--- DEV: CourseService tests finished ---\n\n";
+
+            break;
+        }
+
+        case 4: {
+            cout << "\n-------------------- Login --------------------\n";
+            cout << "Enter Email: ";
+            cin >> email;
+            cout << "Enter Password: ";
+            cin >> password;
+
+            if (!auth.login(email, password)) {
+                cout << "\n\nERROR : Invalid email or password.\n\n";
                 break;
             }
 
-            case 2: {
-                cout << "\n-------------------- Tutor Sign Up --------------------\n";
-                cout << "Enter Email: ";
-                cin >> email;
-                cout << "Enter Password: ";
-                cin >> password;
-                cout << "Full Name (mixed case with no spaces): ";
-                cin >> name;
+            cout << "Login successful!\n\n";
 
-                if (auth.signUpTutor(email, password, name))
-                    cout << "Tutor account created!\n";
-                else
-                    cout << "\n\nERROR : Email already exists.\n\n";
-
-                break;
+            if (auth.currentRole() == 0) {
+                Student student = auth.currentStudent();
+                showStudentMenu(student, auth);
+            }
+            else {
+                Tutor tutor = auth.currentTutor();
+                showTutorMenu(tutor, auth);
             }
 
-            case 3: {
-                cout << "\n-------------------- Login --------------------\n";
-                cout << "Enter Email: ";
-                cin >> email;
-                cout << "Enter Password: ";
-                cin >> password;
+            break;
+        }
 
-                if (!auth.login(email, password)) {
-                    cout << "\n\nERROR : Invalid email or password.\n\n";
-                    break;
-                }
+        case 5:
+            cout << "Exiting TRUtor system.\n";
+            return 0;
 
-                cout << "Login successful!\n\n";
-
-                // Load correct user type
-                if (auth.currentRole() == 0) {
-                    Student student = auth.currentStudent(); 
-                    showStudentMenu(student, auth); 
-                } else {
-                    Tutor tutor = auth.currentTutor();
-                    showTutorMenu(tutor, auth);
-                }
-
-                break;
-            }
-
-            case 4:
-                cout << "Exiting TRUtor system.\n";
-                return 0;
-
-            default:
-                cout << "Invalid option.\n";
+        default:
+            cout << "Invalid option.\n";
         }
     }
 
