@@ -216,9 +216,26 @@ void showStudentMenu(const Student& student, AuthService& auth) {
                 cout << "Major: " << student.getMajor() << "\n";
                 break;
 
-            case 2:
+                // Inside showStudentMenu or when testing student messages
+            case 2:  // Messages
                 cout << "\n---------------------Your Messages---------------------\n";
-                cout << "\nNo messages implemented yet\n";  // will be implemented later
+
+                // Your MessageService test
+                MessageService msg;
+                time_t t = time(0);
+                msg.createMessage(1, 2, "Hello", t);
+                msg.createMessage(2, 1, "Hi", t);
+
+                auto msgs = msg.getMessagesBetween(1, 2);
+                for (const auto& m : msgs)
+                    cout << m.messageId << ": " << m.content << endl;
+
+                int id = msg.fetchMessageIdFromDb(1, 2, t);
+                cout << "Fetched message ID: " << id << endl;
+
+                msg.deleteMessagesBetween(1, 2);
+                cout << "Deleted messages between 1 and 2." << endl;
+
                 break;
 
             case 3:
