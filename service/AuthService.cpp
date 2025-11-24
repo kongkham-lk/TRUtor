@@ -2,30 +2,104 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <vector>
+#include <stdexcept>
+#include <algorithm>
+#include <limits>
+#include "../model/User.h"
+#include "../model/Student.h"
+#include "../model/Tutor.h"
 
 using namespace std;
+using namespace chrono;
 
+// --- Private Helper Struct for Consistent Reading ---
+// NOTE: This is a freestanding struct, so it does not need AuthService:: scope.
+struct UserRecord {
+    string id;
+    string email;
+    string password;
+    string name;
+    int role;
+    string major; // for Student, 'N/A' for Tutor
+    time_point<system_clock> createdAt;
+    bool isValid = false;
+};
+
+/**
+ * @brief Parses a single line from users.txt (pipe-delimited) into a UserRecord.
+ */
+UserRecord parseUserLine(const string& line) {
+    UserRecord record;
+    if (line.empty()) return record;
+
+    stringstream ss(line);
+    string id, email, password, name, roleStr, timestampStr, major;
+    long long timestamp_ll;
+    string tempSeparator;
+
+    // File format: ID|EMAIL|PASSWORD|NAME|ROLE|TIMESTAMP||MAJOR
+    if (getline(ss, id, '|') &&
+        getline(ss, email, '|') &&
+        getline(ss, password, '|') &&
+        getline(ss, name, '|') &&
+        getline(ss, roleStr, '|') &&
+        getline(ss, timestampStr, '|') &&
+        getline(ss, tempSeparator, '|') &&
+        getline(ss, major))
+    {
+        try {
+            record.role = stoi(roleStr);
+        }
+        catch (...) {
+            cerr << "Error parsing role from file: " << roleStr << endl;
+            return record;
+        }
+
+        try {
+            timestamp_ll = stoll(timestampStr);
+            record.createdAt = system_clock::from_time_t((time_t)timestamp_ll);
+        }
+        catch (...) {
+            record.createdAt = system_clock::now();
+        }
+
+        record.id = id;
+        record.email = email;
+        record.password = password;
+        record.name = name;
+        record.major = major;
+        record.isValid = true;
+    }
+    return record;
+}
+
+
+// --- AuthService Implementations (Scope Added) ---
+
+// Constructor
 AuthService::AuthService()
     : loggedInUserId(""), loggedInUserRole(-1) {
     loadSession();
 }
 
 // Check if email already used
-bool AuthService::userExistsByEmail(const string& email) const {
+bool AuthService::userExistsByEmail(const string& email) const { // FIX: Added AuthService::
     ifstream file("users.txt");
     if (!file.is_open()) return false;
 
-    string id, em, pw, name, major;
-    int role;
-
-    while (file >> id >> em >> pw >> name >> role >> major) {
-        if (em == email) return true;
+    string line;
+    while (getline(file, line)) {
+        UserRecord record = parseUserLine(line);
+        if (record.isValid && record.email == email) {
+            return true;
+        }
     }
     return false;
 }
 
-// Simple ID generator: S1, S2 or T1, T2...
-string AuthService::generateId(int role) const {
+// Simple ID generator
+string AuthService::generateId(int role) const { // FIX: Added AuthService::
     ifstream file("users.txt");
     char prefix = (role == 0 ? 'S' : 'T');
     int maxNum = 0;
@@ -34,142 +108,183 @@ string AuthService::generateId(int role) const {
         return string(1, prefix) + "1";
     }
 
-    string id, em, pw, name, major;
-    int r;
-
-    while (file >> id >> em >> pw >> name >> r >> major) {
-        if (!id.empty() && id[0] == prefix) {
+    string line;
+    while (getline(file, line)) {
+        UserRecord record = parseUserLine(line);
+        if (record.isValid && !record.id.empty() && record.id[0] == prefix) {
             try {
-                int num = stoi(id.substr(1));
-                if (num > maxNum) maxNum = num;
-            } catch (...) {}
+                int num = stoi(record.id.substr(1));
+                if (num > maxNum) {
+                    maxNum = num;
+                }
+            }
+            catch (...) {
+                // Ignore malformed IDs
+            }
         }
     }
-
     return string(1, prefix) + to_string(maxNum + 1);
 }
 
-//Student signup logic
-bool AuthService::signUpStudent(const string& email,const string& password,const string& name,const string& major) {
-    if (userExistsByEmail(email)) return false; //if email exists
+// New Helper function
+bool AuthService::saveNewUser(const User& user, const string& major) { // FIX: Added AuthService::
+    if (userExistsByEmail(user.getEmail())) {
+        cerr << "Error: User with this email already exists." << endl;
+        return false;
+    }
 
-    string id = generateId(0);   // generate student ID
+    time_t createdAt_t = system_clock::to_time_t(user.getCreatedAt());
 
     ofstream file("users.txt", ios::app);
-    if (!file.is_open()) return false; //if file cannot be opened
+    if (!file.is_open()) {
+        cerr << "Error: Cannot open users.txt file for writing." << endl;
+        return false;
+    }
 
-    file << id << " " << email << " " << password << " " << name << " " << 0 << " " << major << "\n"; //save to file
+    // New format: ID|EMAIL|PASSWORD|NAME|ROLE|TIMESTAMP||MAJOR
+    file << user.getId() << "|"
+        << user.getEmail() << "|"
+        << user.getPassword() << "|"
+        << user.getName() << "|"
+        << user.getRole() << "|"
+        << createdAt_t << "||"
+        << major << "\n";
+
+    file.close();
+
+    // Member variables are now correctly accessible
+    loggedInUserId = user.getId();
+    loggedInUserRole = user.getRole();
+    saveSession();
 
     return true;
 }
 
-// Tutor signup (major is "null")
-bool AuthService::signUpTutor(const string& email,const string& password,const string& name) {
-    if (userExistsByEmail(email)) return false; //if email exists already
 
-    string id = generateId(1);  // generate tutor ID
+bool AuthService::signUpStudent(const string& email, const string& password, const string& name, const string& major) { // FIX: Added AuthService::
+    string id = generateId(0);
+    Student newStudent(id, email, password, name, major);
 
-    ofstream file("users.txt", ios::app);
-    if (!file.is_open()) return false; //if file cannot be opened
-
-    file << id << " " << email << " " << password << " " << name << " " << 1 << " " << "null" << "\n";   //save to file
-
-    return true;
+    return saveNewUser(newStudent, major);
 }
 
-// Login logic
-bool AuthService::login(const string& email,const string& password) {
+bool AuthService::signUpTutor(const string& email, const string& password, const string& name) { // FIX: Added AuthService::
+    string id = generateId(1);
+    Tutor newTutor(id, email, password, name);
+
+    return saveNewUser(newTutor, "N/A");
+}
+
+// Login definition
+bool AuthService::login(const string& email, const string& password) { // FIX: Added AuthService::
     ifstream file("users.txt");
-    if (!file.is_open()) return false; //if file cannot be opened
+    if (!file.is_open()) return false;
 
-    string id, em, pw, name, major;  //major is unused (null) for tutor
-    int role; // 0 = student, 1 = tutor
-
-    while (file >> id >> em >> pw >> name >> role >> major) {
-        if (em == email && pw == password) {
-            //store current logged in user info
-            loggedInUserId = id;
-            loggedInUserRole = role;
-            saveSession(); //save session
+    string line;
+    while (getline(file, line)) {
+        UserRecord record = parseUserLine(line);
+        if (record.isValid && record.email == email && record.password == password) {
+            loggedInUserId = record.id;
+            loggedInUserRole = record.role;
+            saveSession();
             return true;
         }
     }
-
     return false;
 }
 
-// Logout logic
-void AuthService::logout() {
-    loggedInUserId = "";   // clear current user info
-    loggedInUserRole = -1; // reset role
-    clearSession(); // clear session file
+// Logout definition
+void AuthService::logout() { // FIX: Added AuthService::
+    loggedInUserId = "";
+    loggedInUserRole = -1;
+    clearSession();
 }
 
-//check if logged in already
-bool AuthService::isLoggedIn() const {
-    return loggedInUserRole == 0 || loggedInUserRole == 1; // true if student or tutor logged in
+// check if logged in
+bool AuthService::isLoggedIn() const { // FIX: Added AuthService::
+    return !loggedInUserId.empty();
 }
 
-// get current role
-int AuthService::currentRole() const {
+// current role
+int AuthService::currentRole() const { // FIX: Added AuthService::
     return loggedInUserRole;
 }
 
-// get current user ID
-string AuthService::currentUserId() const {
+// current user ID
+string AuthService::currentUserId() const { // FIX: Added AuthService::
     return loggedInUserId;
 }
 
-// Load the current student
-Student AuthService::currentStudent() const {
-    if (!isLoggedIn() || loggedInUserRole != 0)
-        throw runtime_error("It is not a student account");
+// Object access - Student
+Student AuthService::currentStudent() const { // FIX: Added AuthService::
+    if (loggedInUserId.empty() || loggedInUserRole != 0)
+        throw runtime_error("Not a student account or not logged in");
 
-    ifstream file("users.txt"); // open users file
+    ifstream file("users.txt");
     if (!file.is_open()) throw runtime_error("Cannot open users file.");
 
-    string id, em, pw, name, major;
-    int role;
-
-    while (file >> id >> em >> pw >> name >> role >> major) {
-        if (id == loggedInUserId && role == 0) { //if found the student
-            return Student(id, em, pw, name, major); //return a student object with the data
+    string line;
+    while (getline(file, line)) {
+        UserRecord record = parseUserLine(line);
+        if (record.isValid && record.id == loggedInUserId && record.role == 0) {
+            return Student(record.id, record.email, record.password, record.name, record.major);
         }
     }
-
     throw runtime_error("Student not found");
 }
 
-// Load the current tutor
-Tutor AuthService::currentTutor() const {
-    if (!isLoggedIn() || loggedInUserRole != 1)
-        throw runtime_error("Not a tutor account");
+// Object access - Tutor
+Tutor AuthService::currentTutor() const { // FIX: Added AuthService::
+    if (loggedInUserId.empty() || loggedInUserRole != 1)
+        throw runtime_error("Not a tutor account or not logged in");
 
-    ifstream file("users.txt"); // open users file
+    ifstream file("users.txt");
     if (!file.is_open()) throw runtime_error("Cannot open users file.");
 
-    string id, em, pw, name, major;
-    int role;
-
-    while (file >> id >> em >> pw >> name >> role >> major) {
-        if (id == loggedInUserId && role == 1) {
-            return Tutor(id, em, pw, name); //return a tutor object with the data, no major
+    string line;
+    while (getline(file, line)) {
+        UserRecord record = parseUserLine(line);
+        if (record.isValid && record.id == loggedInUserId && record.role == 1) {
+            return Tutor(record.id, record.email, record.password, record.name);
         }
     }
-
     throw runtime_error("Tutor not found");
 }
 
+
+/**
+ * @brief Reads all user data from users.txt and returns them as a vector of User objects.
+ */
+std::vector<User> AuthService::getAllUsers() const { // FIX: Added AuthService::
+    std::vector<User> allUsers;
+    std::ifstream file("users.txt");
+    if (!file.is_open()) {
+        std::cerr << "Warning: Cannot open users.txt file." << std::endl;
+        return allUsers;
+    }
+
+    std::string line;
+    while (getline(file, line)) {
+        UserRecord record = parseUserLine(line);
+        if (record.isValid) {
+            allUsers.push_back(User(record.id, record.email, record.password, record.name, record.role));
+        }
+    }
+    file.close();
+    return allUsers;
+}
+
+
 // load session from session.txt
-void AuthService::loadSession() {
+void AuthService::loadSession() { // FIX: Added AuthService::
     ifstream file("session.txt");
-    if (!file.is_open()) { //if file cannot be opened
+    if (!file.is_open()) {
         loggedInUserId = "";
         loggedInUserRole = -1;
         return;
     }
 
-    string roleStrin; // string to hold role from file
+    string roleStrin;
 
     getline(file, loggedInUserId);
     getline(file, roleStrin);
@@ -180,18 +295,31 @@ void AuthService::loadSession() {
         return;
     }
 
-    loggedInUserRole = stoi(roleStrin); //convert string role to int
+    try {
+        loggedInUserRole = stoi(roleStrin);
+    }
+    catch (...) {
+        loggedInUserId = "";
+        loggedInUserRole = -1;
+    }
 }
 
 // save session to session.txt
-void AuthService::saveSession() const {
+void AuthService::saveSession() const { // FIX: Added AuthService::
     ofstream file("session.txt");
-    if (!file.is_open()) return;
-
-    file << loggedInUserId << "\n" << loggedInUserRole << "\n"; // save ID and role
+    if (!file.is_open()) {
+        cerr << "Error: Cannot open session.txt for writing." << endl;
+        return;
+    }
+    file << loggedInUserId << "\n";
+    file << loggedInUserRole << "\n";
+    file.close();
 }
 
 // clear session file
-void AuthService::clearSession() const {
-    ofstream file("session.txt", ios::trunc); // open session file in truncate mode to clear it
+void AuthService::clearSession() const { // FIX: Added AuthService:: and const
+    ofstream file("session.txt", ios::trunc);
+    if (!file.is_open()) {
+        cerr << "Error: Cannot open session.txt for clearing." << endl;
+    }
 }

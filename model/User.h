@@ -4,6 +4,9 @@
 #include <string>
 #include <set>
 #include <chrono>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include "../interface/IUser.h"
 
 using namespace std;
@@ -21,6 +24,7 @@ private:
     system_clock::time_point createdAt;
 
 public:
+    User(); // Default constructor for file loading
     User(string id, const string& email, const string& password, const string& name, int role); // Constructor
 
     // Overrided functions
@@ -42,6 +46,10 @@ public:
     const set<string> getSubjects() const override;
     void addSubject(const string& subject) override;
     void removeSubject(const string& subject) override;
+
+    // Stream operators for file persistence
+    friend std::ostream& operator<<(std::ostream& os, const User& user);
+    friend std::istream& operator>>(std::istream& is, User& user);
 
     ~User(); // Destructor
 };
