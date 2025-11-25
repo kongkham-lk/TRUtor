@@ -261,7 +261,8 @@ void getForumPage(const User& user)
 }
 
 bool showUserMenu(const User& user, AuthService& auth) {
-    while (true) {
+    bool isLoggedIn = true;
+    while (isLoggedIn) {
         int choice = getChoiceFromUserMenu(user);
 
         switch (choice) {
@@ -280,6 +281,7 @@ bool showUserMenu(const User& user, AuthService& auth) {
             case 5:
                 auth.logout();
                 cout << "Logged out successfully.\n";
+                isLoggedIn = false;
                 break; // return to main menu
             case 6:
                 return false; // return to main menu
