@@ -4,88 +4,47 @@
 #include "model/User.h"
 #include "model/Student.h"
 #include "model/Tutor.h"
-#include "service/AuthService.h"
 #include "model/Course.h"
+#include "service/AuthService.h"
 #include "service/CourseService.h"
 #include "service/messageService.h"
+#include "service/ForumService.h"
 
 using namespace std;
 
-void showStudentMenu(const Student& student, AuthService& auth); //function to show student menu
-void showTutorMenu(const Tutor& tutor, AuthService& auth); //function to show tutor menu
+bool getLoginHomePage(AuthService auth);
+bool showUserMenu(const User& user, AuthService& auth);
 
 int main() {
-    cout << "\n..........Application Starting...........\n" << endl;
-    cout << "Testing User, Student, Tutor Classes:\n" << endl;
-    // --- Testing User Logic ---
-    
-    Student s1("0", "jay@mytru.ca", "11111", "Jay", "CS");
-    Tutor t1("1", "Kevin@mytru.ca", "22222", "Kevin");
+    cout << endl << "\nApplication Starting ..." << endl;
+    cout << endl << string(30, '=') << " Welcome to TRUtor " << string(30, '=') << endl;
 
-    
-    // Use pointers to avoid object slicing when storing derived classes in base container
-    vector<User*> users;
-    users.push_back(&s1);
-    users.push_back(&t1);
-    
-    for (User* user : users) {
-        if (user->getRole() == 0) {
-            Student* s = dynamic_cast<Student*>(user);
-            if (s) {
-                cout << "This user is Student." << endl;
-            } else {
-                cout << "Downcast failed\n";
-            }
-        } else if (user->getRole() == 1) {
-            Tutor* t = dynamic_cast<Tutor*>(user); 
-            if (t) {
-                cout << "This user is Tutor." << endl;
-            } else {
-                cout << "Downcast failed\n";
-            }
-        }
-    }
-
-     AuthService auth; // Authentication service instance
-
-     cout << "\n------------------- Welcome to TRUtor -------------------\n\n";
-
+    AuthService auth; // Authentication service instance
+    bool running = true;
     // Auto-login check
     if (auth.isLoggedIn()) {
         cout << "Auto-logged in!\n";
-
-        if (auth.currentRole() == 0) { //check if the logged in user is student
-            Student student = auth.currentStudent();
-            cout << "Welcome back Student: " << student.getName()
-                 << " (" << student.getMajor() << ")\n";
-            showStudentMenu(student, auth); //call function to show student menu
-        } else {
-            Tutor tutor = auth.currentTutor();
-            cout << "Welcome back Tutor: " << tutor.getName() << "\n";
-            showTutorMenu(tutor, auth); //call function to show tutor menu
-        }
+        running = getLoginHomePage(auth);
     }
 
     // -------------------------------
     // Authentication Loop
     // -------------------------------
-    while (true) {
+    while (running) {
         int option;
         string email, password, name, major;
 
-        cout << "\n---------------------------- Authentication Menu ---------------------------\n";
+        cout << endl << string(29, '-') << " Authentication Menu " << string(29, '-') << endl;
         cout << "1. Sign Up (Student)\n";
         cout << "2. Sign Up (Tutor)\n";
-        cout << "3. (DEV) Test Course / CourseService\n";
-        cout << "4. Messages Test\n";
-        cout << "5. Login\n";
-        cout << "6. Exit\n";
-        cout << "Choose one of the above options (1-6) : ";
+        cout << "3. Login\n";
+        cout << "4. Exit\n";
+        cout << "Choose one of the above options (1-4) : ";
         cin >> option;
 
         switch (option) {
         case 1: {
-            cout << "\n-------------------- Student Sign Up --------------------\n";
+            cout << endl << string(29, '-') << " Student Sign Up " << string(29, '-') << endl;
             cout << "Enter Email: ";
             cin >> email;
             cout << "Enter Password: ";
@@ -102,9 +61,8 @@ int main() {
 
             break;
         }
-
         case 2: {
-            cout << "\n-------------------- Tutor Sign Up --------------------\n";
+            cout << endl << string(30, '-') << " Tutor Sign Up " << string(30, '-') << endl;
             cout << "Enter Email: ";
             cin >> email;
             cout << "Enter Password: ";
@@ -119,202 +77,216 @@ int main() {
 
             break;
         }
-
         case 3: {
-            // ---------- Course / CourseService Tests ----------
-            cout << "\n--- DEV: Running CourseService tests ---\n";
-
-            CourseService cs;
-
-            // Test createCourse
-            Course c1("C101", "Intro to C++", "Basics of C++ programming.");
-            cs.createCourse(c1);
-
-            // Test getCourse
-            Course fetched = cs.getCourse("C101");
-            cout << "Fetched course: ID=" << fetched.getId()
-                << ", Title=\"" << fetched.getTitle()
-                << "\", Desc=\"" << fetched.getDescription() << "\"\n";
-
-            // Test updateCourse
-            fetched.setTitle("Intro to Modern C++");
-            fetched.setDescription("Updated description: modern features and best practices.");
-            cs.updateCourse(fetched);
-
-            // Test getAllCourses
-            vector<Course> all = cs.getAllCourses();
-            cout << "\nAll courses returned by getAllCourses():\n";
-            for (const auto& course : all) {
-                cout << " - ID=" << course.getId()
-                    << ", Title=\"" << course.getTitle() << "\"\n";
-            }
-
-            // Test deleteCourse
-            cs.deleteCourse("C101");
-            cout << "--- DEV: CourseService tests finished ---\n\n";
-
-            break;
-        }
-        case 4: {  // MessageService test
-            cout << "\n--- DEV: Running MessageService tests ---\n";
-            MessageService msg;
-            time_t t = time(0);
-            msg.createMessage(1, 2, "Hello", t);
-            msg.createMessage(2, 1, "Hi", t);
-
-            auto msgs = msg.getMessagesBetween(1, 2);
-            for (const auto& m : msgs)
-                cout << m.messageId << ": " << m.content << endl;
-
-            int id = msg.fetchMessageIdFromDb(1, 2, t);
-            cout << "Fetched message ID: " << id << endl;
-
-            msg.deleteMessagesBetween(1, 2);
-            cout << "Deleted messages between 1 and 2.\n";
-            cout << "--- end of messageService tests ---\n\n";
-
-            break;
-        }
-
-        case 5: {
-            cout << "\n-------------------- Login --------------------\n";
+            cout << endl << string(36, '-')<< " Login " << string(36, '-') << endl;
             cout << "Enter Email: ";
             cin >> email;
             cout << "Enter Password: ";
             cin >> password;
 
             if (!auth.login(email, password)) {
-                cout << "\n\nERROR : Invalid email or password.\n\n";
+                cout << endl << "ERROR : Invalid email or password." << endl;
                 break;
             }
 
-            cout << "Login successful!\n\n";
-
-            if (auth.currentRole() == 0) {
-                Student student = auth.currentStudent();
-                showStudentMenu(student, auth);
-            }
-            else {
-                Tutor tutor = auth.currentTutor();
-                showTutorMenu(tutor, auth);
-            }
-
+            cout << endl << "Login successful!" << endl;
+            running = getLoginHomePage(auth);
             break;
         }
-
-        case 6:
-            cout << "Exiting TRUtor system.\n";
+        case 4:
+            cout << "Exiting TRUtor system." << endl;
             return 0;
-
         default:
-            cout << "Invalid option.\n";
+            cout << "Invalid option." << endl;
         }
     }
 
-    cout << "\n..........Application Ending...........\n" << endl;
+    cout << endl << "Application Ending ..." << endl;
     return 0;
 }
 
-//function to show student menu, takes student object and auth service reference as parameters
-void showStudentMenu(const Student& student, AuthService& auth) {
-    while (true) {
-        int choice;
-
-        cout << "\n------------------------- Student Menu -------------------------\n";
-        cout << "Welcome, " << student.getName() << "!\n";
-        cout << "1. View Profile\n";
-        cout << "2. Messages\n";
-        cout << "3. Tutoring Sessions\n";
-        cout << "4. Logout\n";
-        cout << "Choose an option (1-4): ";
-        cin >> choice;
-
-        switch (choice) {
-            case 1:
-                cout << "\n------------------- Student Profile -------------------\n";
-                cout << "ID: " << student.getId() << "\n";
-                cout << "Name: " << student.getName() << "\n";
-                cout << "Email: " << student.getEmail() << "\n";
-                cout << "Major: " << student.getMajor() << "\n";
-                break;
-
-                // Inside showStudentMenu or when testing student messages
-            case 2: {  // Messages
-                cout << "\n---------------------Your Messages---------------------\n";
-
-                // Your MessageService test
-                MessageService msg;
-                time_t t = time(0);
-                msg.createMessage(1, 2, "Hello", t);
-                msg.createMessage(2, 1, "Hi", t);
-
-                auto msgs = msg.getMessagesBetween(1, 2);
-                for (const auto& m : msgs)
-                    cout << m.messageId << ": " << m.content << endl;
-
-                int id = msg.fetchMessageIdFromDb(1, 2, t);
-                cout << "Fetched message ID: " << id << endl;
-
-                msg.deleteMessagesBetween(1, 2);
-                cout << "Deleted messages between 1 and 2." << endl;
-
-                break;  // remember the break inside the block
-            }
-
-            case 3:
-                cout << "\n------------------- Tutoring Sessions -------------------\n";
-                cout << "\nNo tutoring sessions implemented yet\n"; // will be implemented later
-                break;
-
-            case 4:
-                auth.logout();
-                cout << "Logged out successfully.\n";
-                return; // return to main menu
-
-            default:
-                cout << "Invalid option.\n";
-        }
+bool getLoginHomePage(AuthService auth)
+{
+    if (auth.currentRole() == 0) { //check if the logged in user is student
+        Student student = auth.currentStudent();
+        cout << "Welcome back Student: " << student.getName()
+             << " (" << student.getMajor() << ")\n";
+        return showUserMenu(student, auth); //call function to show student menu
+    } else {
+        Tutor tutor = auth.currentTutor();
+        cout << "Welcome back Tutor: " << tutor.getName() << "\n";
+        return showUserMenu(tutor, auth); //call function to show tutor menu
     }
+
 }
 
-void showTutorMenu(const Tutor& tutor, AuthService& auth) {
-    while (true) {
-        int choice;
+int getChoiceFromUserMenu(const User& user)
+{
+    int choice;
+    string headerType = dynamic_cast<const Student*>(&user) ? "Student" : "Tutor";
 
-        cout << "\n---------------------- Tutor Menu ---------------------\n";
-        cout << "Welcome, " << tutor.getName() << "!\n";
-        cout << "1. View Profile\n";
-        cout << "2. Messages\n";
-        cout << "3. Tutoring Sessions\n";
-        cout << "4. Logout\n";
-        cout << "Choose an option (1-4): ";
+    cout << endl << string(34, '-') << " " + headerType + " Menu " << string(34, '-') << endl;
+    cout << "Welcome, " << user.getName() << "!\n";
+    cout << "1. View Profile\n";
+    cout << "2. Messages\n";
+    cout << "3. Tutoring Sessions\n";
+    cout << "4. Forum\n";
+    cout << "5. Logout\n";
+    cout << "6. Exit\n";
+    cout << "Choose an option (1-6): ";
+    cin >> choice;
+
+    return choice;
+}
+
+void getUserProfilePage(const User& user)
+{
+    cout << endl << string(33, '-') << " Profile Detail " << string(33, '-') << endl;
+    cout << "ID: " << user.getId() << "\n";
+    cout << "Name: " << user.getName() << "\n";
+    cout << "Email: " << user.getEmail() << "\n";
+
+    const Student* student = dynamic_cast<const Student*>(&user);
+    if (student)
+        cout << "Major: " << student->getMajor() << "\n";
+}
+
+void getUserMessagesPage(const User& user)
+{
+    cout << endl << string(33, '-') << " Your Messages " << string(33, '-') << endl;
+
+    // MessageService msg;
+    // time_t t = time(0);
+    // msg.createMessage(1, 2, "Hello", t);
+    // msg.createMessage(2, 1, "Hi", t);
+    //
+    // auto msgs = msg.getMessagesBetween(1, 2);
+    // for (const auto& m : msgs)
+    //     cout << m.messageId << ": " << m.content << endl;
+    //
+    // int id = msg.fetchMessageIdFromDb(1, 2, t);
+    // cout << "Fetched message ID: " << id << endl;
+    //
+    // msg.deleteMessagesBetween(1, 2);
+    // cout << "Deleted messages between 1 and 2." << endl;
+}
+
+void getTutoringSessionPage(const User& user)
+{
+    cout << endl << string(32, '-') << " Tutoring Sessions " << string(32, '-') << endl;
+    // cout << "\nNo tutoring sessions implemented yet\n"; // will be implemented later
+}
+
+void getForumDetail(const Forum& forum, const User& user)
+{
+    cout << "Forum Id: " << forum.getId() << endl;
+    cout << "CreateBy: " << user.getName() << endl;
+    cout << "CreateAt: " << forum.getCreatedAt() << endl;
+    cout << "Content: " << forum.getContent() << endl;
+    cout << string(70, '-') << endl;
+}
+
+void getForumPage(const User& user)
+{
+    cout << endl << string(32, '-') << " Forum Dashboard " << string(32, '-') << endl;
+
+    ForumService forumService;
+    vector<Forum> forums = forumService.getAllForums();
+    if (forums.empty())
+        cout << "No Forum Found!" << endl;
+    else
+    {
+        cout << "All Forums:" << endl;
+        cout << string(70, '-') << endl;
+        for (Forum forum : forums)
+            getForumDetail(forum, user);
+    }
+
+    int choice = -1;
+    do
+    {
+        cout << endl << "Choose an option to proceed:" << endl;
+        cout << "1. Create a new Forum" << endl;
+        cout << "2. Manage your forums" << endl;
+        cout << "3. Back to main page" << endl;
+        cout << "Please Enter: ";
         cin >> choice;
+
+        if (choice > 0 && choice < 3)
+        {
+            if (choice == 1)
+            {
+                string newContent = "";
+                cout << endl << "Please enter forum content:" << endl;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                getline(cin, newContent);
+                forumService.createForum(user.getId(), newContent);
+                cout << endl << "Your Forum Successfully Created..." << endl;
+            }
+            else if (choice == 2)
+            {
+                vector<Forum> forums = forumService.getAllForumsByUserId(user.getId());
+                if (forums.empty())
+                    cout << endl << "No Forum Found!" << endl;
+                else
+                {
+                    cout << endl << "All Forums:" << endl;
+                    for (Forum forum : forums)
+                        getForumDetail(forum, user);
+
+                    int targetForumId = -1;
+                    string newContent;
+                    cout << endl << "Target forum Id: ";
+                    cin >> targetForumId;
+                    cout << "Please enter new content: " << endl;
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    getline(cin, newContent);
+                    forumService.editForum(user.getId(), targetForumId, newContent);
+
+                    cout << endl << "Here is your udpated forum detail:" << endl;
+                    cout << string(70, '-') << endl;
+                    Forum updatedForum = forumService.getForumById(targetForumId);
+                    getForumDetail(updatedForum, user);
+                }
+            }
+        }
+        else if (choice == 3)
+            break;
+        else
+            cout << endl << "Invalid Option, Please try again!" << endl;
+        choice = -1;
+    } while (choice == -1);
+
+    cout << endl << "Exit Forum Page..." << endl;
+}
+
+bool showUserMenu(const User& user, AuthService& auth) {
+    while (true) {
+        int choice = getChoiceFromUserMenu(user);
 
         switch (choice) {
             case 1:
-                cout << "\n------------------- Tutor Profile -------------------\n";
-                cout << "ID: " << tutor.getId() << "\n";
-                cout << "Name: " << tutor.getName() << "\n";
-                cout << "Email: " << tutor.getEmail() << "\n";
+                getUserProfilePage(user);
                 break;
-
-            case 2:
-                cout << "\n---------------------Your Messages---------------------\n";
-                cout << "\n(No messages implemented yet)\n";
-                break;
-
+            case 2:  // Messages
+                getUserMessagesPage(user);
+                break;  // remember the break inside the block
             case 3:
-                cout << "\n------------------- Mannage Tutoring Sessions -------------------\n";
-                cout << "\n(No session management implemented yet)\n";
+                getTutoringSessionPage(user);
                 break;
-
             case 4:
+                getForumPage(user);
+                break;
+            case 5:
                 auth.logout();
                 cout << "Logged out successfully.\n";
-                return; // return to main menu
-
+                break; // return to main menu
+            case 6:
+                return false; // return to main menu
             default:
                 cout << "Invalid option.\n";
+                break;
         }
     }
+    return true;
 }
