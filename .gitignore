@@ -76,3 +76,4 @@ Makefile
 out/
 build/
 logs/
+data/
