@@ -19,7 +19,7 @@ void ForumService::saveForums(const vector<Forum>& forums) const {
     if (!exists(dirPath) || !is_directory(dirPath)) {
         // Attempt to create the directory
         if (create_directory(dirPath)) {
-            cout << "Directory created successfully: " << dirPath << endl;
+            // cout << "Directory created successfully: " << dirPath << endl;
         } else {
             cerr << "Failed to create directory: " << dirPath << endl;
             return;
@@ -41,13 +41,18 @@ void ForumService::saveForums(const vector<Forum>& forums) const {
 
 void ForumService::createForum(const string& creatorId, const string& content) const
 {
+    // cout << "Start creating new forum... " << endl;
+    // cout << "Retrieving all Forum..." << endl;
     vector<Forum> forums = getAllForums();
 
-    int maxId = forums[forums.size()-1].getId();
+    // cout << "Get lastId..." << endl;
+    int lastId = forums.empty() ? 0 : forums[forums.size()-1].getId();
 
-    const Forum newForum(maxId + 1, creatorId, content);
-
+    // cout << "Creating new forum..." << endl;
+    const Forum newForum(lastId + 1, creatorId, content);
     forums.push_back(newForum);
+
+    // cout << "Saving new forum..." << endl;
     saveForums(forums); // Save the new list to the file
 }
 
@@ -90,7 +95,7 @@ vector<Forum> ForumService::getAllForums() const
     ifstream file(filePath);
     if (!file.is_open())
     {
-        cerr << "Failed to open file: " << filePath << endl;
+        // cerr << "Failed to open file: " << filePath << endl;
         return forums;
     }
 
@@ -111,6 +116,16 @@ vector<Forum> ForumService::getAllForums() const
     file.close();
 
     return forums;
+}
+
+Forum ForumService::getForumById(const int& forumId) const
+{
+    if (vector<Forum> forums = getAllForums(); !forums.empty())
+        for (const Forum& forum : forums)
+            if (forum.getId() == forumId)
+                return forum;
+    else
+        return Forum();
 }
 
 vector<Forum> ForumService::getAllForumsByUserId(const string& userId) const

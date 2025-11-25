@@ -15,6 +15,7 @@ private:
     time_t createdAt;
 
 public:
+    Forum();
     Forum(int id, const string& userId, const string& msg, time_t timestamp = system_clock::to_time_t(system_clock::now())); // Constructor
 
     const int getId() const;

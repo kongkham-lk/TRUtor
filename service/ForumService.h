@@ -22,6 +22,7 @@ public:
     void deleteForums(const string& requestUserId, int forumId) const;
 
     vector<Forum> getAllForums() const;
+    Forum getForumById(const int& forumId) const;
     vector<Forum> getAllForumsByUserId(const string& userId) const;
     vector<Forum> getAllForumsByTime(time_t timeStamp) const;
 

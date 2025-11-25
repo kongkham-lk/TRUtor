@@ -3,7 +3,12 @@
 
 using namespace std;
 
-Forum::Forum(int id, const string& userId, const string& msg, time_t timestamp = system_clock::to_time_t(system_clock::now()))
+Forum::Forum()
+{
+
+}
+
+Forum::Forum(int id, const string& userId, const string& msg, time_t timestamp)
     : id(id), userId(userId), content(msg), createdAt(timestamp) {
 }
 
