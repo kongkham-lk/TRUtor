@@ -7,8 +7,8 @@ using namespace std;
 using namespace chrono;
 // using namespace UUIDv4;
 
-User::User(string id, const string& email, const string& password, const string& name, int role)
-    : id(id), email(email), password(password), name(name), role(role), createdAt(system_clock::now()) {
+User::User(const string& id, const string& email, const string& password, const string& name, int role)
+    : id(id), email(email), password(password), name(name), role(role), createdAt(system_clock::to_time_t(system_clock::now())) {
 }
 
 const string& User::getId() const {
@@ -36,7 +36,7 @@ void User::setName(const string& name) {
     this->name = name;
 }
 
-system_clock::time_point User::getCreatedAt() const {
+time_t User::getCreatedAt() const {
     return this->createdAt;
 }
 
