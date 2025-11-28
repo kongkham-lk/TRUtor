@@ -21,13 +21,13 @@ private:
     string name;
     int role; // 0 if student, 1 if tutor
     set<string> subjects;
-    system_clock::time_point createdAt;
+    time_t createdAt;
 
 public:
     User(); // Default constructor for file loading
     User(string id, const string& email, const string& password, const string& name, int role); // Constructor
 
-    // Overrided functions
+    // Override functions
     const string& getId() const override;
 
     const string& getEmail() const override;
@@ -39,7 +39,7 @@ public:
     const string& getName() const override;
     void setName(const string& name) override;
 
-    system_clock::time_point getCreatedAt() const override;
+    time_t getCreatedAt() const override;
 
     int getRole() const; // for checking what role is the user
 

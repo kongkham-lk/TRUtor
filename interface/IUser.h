@@ -24,7 +24,7 @@ public:
     virtual const string& getName() const = 0;
     virtual void setName(const string& name) = 0;
 
-    virtual system_clock::time_point getCreatedAt() const = 0;
+    virtual time_t getCreatedAt() const = 0;
 
 
     // virtual bool signUp(const string& email, const string& password, const ) = 0;

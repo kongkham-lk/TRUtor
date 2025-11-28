@@ -11,8 +11,8 @@ User::User()
     : id(""), email(""), password(""), name(""), role(-1), createdAt(system_clock::now()) {
 }
 
-User::User(string id, const string& email, const string& password, const string& name, int role)
-    : id(id), email(email), password(password), name(name), role(role), createdAt(system_clock::now()) {
+User::User(const string& id, const string& email, const string& password, const string& name, int role)
+    : id(id), email(email), password(password), name(name), role(role), createdAt(system_clock::to_time_t(system_clock::now())) {
 }
 
 // ... (Other getters and setters remain the same) ...
