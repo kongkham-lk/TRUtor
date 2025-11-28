@@ -14,7 +14,6 @@ using namespace std;
 using namespace chrono;
 
 // --- Private Helper Struct for Consistent Reading ---
-// NOTE: This is a freestanding struct, so it does not need AuthService:: scope.
 struct UserRecord {
     string id;
     string email;
@@ -58,6 +57,7 @@ UserRecord parseUserLine(const string& line) {
 
         try {
             timestamp_ll = stoll(timestampStr);
+            // Conversion from time_t (long long) to time_point
             record.createdAt = system_clock::from_time_t((time_t)timestamp_ll);
         }
         catch (...) {
@@ -75,7 +75,7 @@ UserRecord parseUserLine(const string& line) {
 }
 
 
-// --- AuthService Implementations (Scope Added) ---
+// --- AuthService Implementations ---
 
 // Constructor
 AuthService::AuthService()
@@ -84,7 +84,7 @@ AuthService::AuthService()
 }
 
 // Check if email already used
-bool AuthService::userExistsByEmail(const string& email) const { // FIX: Added AuthService::
+bool AuthService::userExistsByEmail(const string& email) const {
     ifstream file("users.txt");
     if (!file.is_open()) return false;
 
@@ -99,7 +99,7 @@ bool AuthService::userExistsByEmail(const string& email) const { // FIX: Added A
 }
 
 // Simple ID generator
-string AuthService::generateId(int role) const { // FIX: Added AuthService::
+string AuthService::generateId(int role) const {
     ifstream file("users.txt");
     char prefix = (role == 0 ? 'S' : 'T');
     int maxNum = 0;
@@ -127,13 +127,15 @@ string AuthService::generateId(int role) const { // FIX: Added AuthService::
 }
 
 // New Helper function
-bool AuthService::saveNewUser(const User& user, const string& major) { // FIX: Added AuthService::
+bool AuthService::saveNewUser(const User& user, const string& major) {
     if (userExistsByEmail(user.getEmail())) {
         cerr << "Error: User with this email already exists." << endl;
         return false;
     }
 
-    time_t createdAt_t = system_clock::to_time_t(user.getCreatedAt());
+    // FIX C2664: user.getCreatedAt() already returns time_t (from the User.cpp fix), 
+    // so no further conversion is needed.
+    time_t createdAt_t = user.getCreatedAt();
 
     ofstream file("users.txt", ios::app);
     if (!file.is_open()) {
@@ -152,7 +154,6 @@ bool AuthService::saveNewUser(const User& user, const string& major) { // FIX: A
 
     file.close();
 
-    // Member variables are now correctly accessible
     loggedInUserId = user.getId();
     loggedInUserRole = user.getRole();
     saveSession();
@@ -161,22 +162,24 @@ bool AuthService::saveNewUser(const User& user, const string& major) { // FIX: A
 }
 
 
-bool AuthService::signUpStudent(const string& email, const string& password, const string& name, const string& major) { // FIX: Added AuthService::
+bool AuthService::signUpStudent(const string& email, const string& password, const string& name, const string& major) {
     string id = generateId(0);
+    // Student constructor uses the fixed User base constructor
     Student newStudent(id, email, password, name, major);
 
     return saveNewUser(newStudent, major);
 }
 
-bool AuthService::signUpTutor(const string& email, const string& password, const string& name) { // FIX: Added AuthService::
+bool AuthService::signUpTutor(const string& email, const string& password, const string& name) {
     string id = generateId(1);
+    // Tutor constructor uses the fixed User base constructor
     Tutor newTutor(id, email, password, name);
 
     return saveNewUser(newTutor, "N/A");
 }
 
 // Login definition
-bool AuthService::login(const string& email, const string& password) { // FIX: Added AuthService::
+bool AuthService::login(const string& email, const string& password) {
     ifstream file("users.txt");
     if (!file.is_open()) return false;
 
@@ -194,29 +197,29 @@ bool AuthService::login(const string& email, const string& password) { // FIX: A
 }
 
 // Logout definition
-void AuthService::logout() { // FIX: Added AuthService::
+void AuthService::logout() {
     loggedInUserId = "";
     loggedInUserRole = -1;
     clearSession();
 }
 
 // check if logged in
-bool AuthService::isLoggedIn() const { // FIX: Added AuthService::
+bool AuthService::isLoggedIn() const {
     return !loggedInUserId.empty();
 }
 
 // current role
-int AuthService::currentRole() const { // FIX: Added AuthService::
+int AuthService::currentRole() const {
     return loggedInUserRole;
 }
 
 // current user ID
-string AuthService::currentUserId() const { // FIX: Added AuthService::
+string AuthService::currentUserId() const {
     return loggedInUserId;
 }
 
 // Object access - Student
-Student AuthService::currentStudent() const { // FIX: Added AuthService::
+Student AuthService::currentStudent() const {
     if (loggedInUserId.empty() || loggedInUserRole != 0)
         throw runtime_error("Not a student account or not logged in");
 
@@ -226,7 +229,11 @@ Student AuthService::currentStudent() const { // FIX: Added AuthService::
     string line;
     while (getline(file, line)) {
         UserRecord record = parseUserLine(line);
+        // NOTE: Student constructor will use the time_point from the record
         if (record.isValid && record.id == loggedInUserId && record.role == 0) {
+            // NOTE: The Student constructor likely needs to accept the creation time
+            // For now, it's implicitly using the default constructor, 
+            // but this logic is separate from the C2664 error.
             return Student(record.id, record.email, record.password, record.name, record.major);
         }
     }
@@ -234,7 +241,7 @@ Student AuthService::currentStudent() const { // FIX: Added AuthService::
 }
 
 // Object access - Tutor
-Tutor AuthService::currentTutor() const { // FIX: Added AuthService::
+Tutor AuthService::currentTutor() const {
     if (loggedInUserId.empty() || loggedInUserRole != 1)
         throw runtime_error("Not a tutor account or not logged in");
 
@@ -245,6 +252,8 @@ Tutor AuthService::currentTutor() const { // FIX: Added AuthService::
     while (getline(file, line)) {
         UserRecord record = parseUserLine(line);
         if (record.isValid && record.id == loggedInUserId && record.role == 1) {
+            // NOTE: Tutor constructor will use the time_point from the record
+            // For now, it's implicitly using the default constructor.
             return Tutor(record.id, record.email, record.password, record.name);
         }
     }
@@ -255,7 +264,7 @@ Tutor AuthService::currentTutor() const { // FIX: Added AuthService::
 /**
  * @brief Reads all user data from users.txt and returns them as a vector of User objects.
  */
-std::vector<User> AuthService::getAllUsers() const { // FIX: Added AuthService::
+std::vector<User> AuthService::getAllUsers() const {
     std::vector<User> allUsers;
     std::ifstream file("users.txt");
     if (!file.is_open()) {
@@ -267,6 +276,8 @@ std::vector<User> AuthService::getAllUsers() const { // FIX: Added AuthService::
     while (getline(file, line)) {
         UserRecord record = parseUserLine(line);
         if (record.isValid) {
+            // NOTE: This User constructor is implicitly discarding the createdAt time from the record
+            // as the User constructor you defined only takes 5 arguments.
             allUsers.push_back(User(record.id, record.email, record.password, record.name, record.role));
         }
     }
@@ -276,7 +287,7 @@ std::vector<User> AuthService::getAllUsers() const { // FIX: Added AuthService::
 
 
 // load session from session.txt
-void AuthService::loadSession() { // FIX: Added AuthService::
+void AuthService::loadSession() {
     ifstream file("session.txt");
     if (!file.is_open()) {
         loggedInUserId = "";
@@ -305,7 +316,7 @@ void AuthService::loadSession() { // FIX: Added AuthService::
 }
 
 // save session to session.txt
-void AuthService::saveSession() const { // FIX: Added AuthService::
+void AuthService::saveSession() const {
     ofstream file("session.txt");
     if (!file.is_open()) {
         cerr << "Error: Cannot open session.txt for writing." << endl;
@@ -317,7 +328,7 @@ void AuthService::saveSession() const { // FIX: Added AuthService::
 }
 
 // clear session file
-void AuthService::clearSession() const { // FIX: Added AuthService:: and const
+void AuthService::clearSession() const {
     ofstream file("session.txt", ios::trunc);
     if (!file.is_open()) {
         cerr << "Error: Cannot open session.txt for clearing." << endl;

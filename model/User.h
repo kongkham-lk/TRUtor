@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <ctime> // Needed for time_t definition
 #include "../interface/IUser.h"
 
 using namespace std;
@@ -21,11 +22,13 @@ private:
     string name;
     int role; // 0 if student, 1 if tutor
     set<string> subjects;
-    time_t createdAt;
+    // Internal storage uses the modern C++ type
+    system_clock::time_point createdAt;
 
 public:
     User(); // Default constructor for file loading
-    User(string id, const string& email, const string& password, const string& name, int role); // Constructor
+    // FIX C2511: Changed 'string id' to 'const string& id'
+    User(const string& id, const string& email, const string& password, const string& name, int role); // Constructor
 
     // Override functions
     const string& getId() const override;
@@ -39,6 +42,7 @@ public:
     const string& getName() const override;
     void setName(const string& name) override;
 
+    // FIX: Public getter returns the requested legacy type (time_t)
     time_t getCreatedAt() const override;
 
     int getRole() const; // for checking what role is the user

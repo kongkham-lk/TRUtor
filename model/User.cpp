@@ -2,20 +2,28 @@
 #include <sstream>
 #include <algorithm>
 #include <fstream>
-#include "User.h"
+#include <vector>
+#include <stdexcept>
+#include "User.h" // Includes the corrected header
 
 using namespace std;
 using namespace chrono;
 
+// --- Constructors ---
+
+// FIX: Initialize createdAt with system_clock::time_point
 User::User()
     : id(""), email(""), password(""), name(""), role(-1), createdAt(system_clock::now()) {
 }
 
+// FIX C2511/C2550: The signature here MUST exactly match the declaration in User.h (const string& id)
+// This is the line that will fix C2511/C2550.
 User::User(const string& id, const string& email, const string& password, const string& name, int role)
-    : id(id), email(email), password(password), name(name), role(role), createdAt(system_clock::to_time_t(system_clock::now())) {
+    : id(id), email(email), password(password), name(name), role(role), createdAt(system_clock::now()) {
 }
 
-// ... (Other getters and setters remain the same) ...
+// --- Accessors and Mutators ---
+
 const string& User::getId() const { return this->id; }
 const string& User::getEmail() const { return this->email; }
 void User::setEmail(const string& email) { this->email = email; }
@@ -23,18 +31,25 @@ const string& User::getPassword() const { return this->password; }
 void User::setPassword(const string& password) { this->password = password; }
 const string& User::getName() const { return this->name; }
 void User::setName(const string& name) { this->name = name; }
-system_clock::time_point User::getCreatedAt() const { return this->createdAt; }
+
+// FIX: Convert the internal system_clock::time_point to time_t for return.
+time_t User::getCreatedAt() const {
+    return system_clock::to_time_t(this->createdAt);
+}
+
 int User::getRole() const { return this->role; }
 const set<string> User::getSubjects() const { return this->subjects; }
 void User::addSubject(const string& subject) { this->subjects.insert(subject); }
 void User::removeSubject(const string& subject) { this->subjects.erase(subject); }
 User::~User() {}
 
+// --- Stream Operators ---
+
 // Serialize User object to a stream
 std::ostream& operator<<(std::ostream& os, const User& user) {
     // ID|Email|Password|Name|Role|CreatedAt(time_t)|Subjects(comma-separated)
 
-    // 1. Convert time_point to time_t
+    // 1. Convert internal time_point to time_t for serialization
     time_t timeStamp = system_clock::to_time_t(user.createdAt);
 
     os << user.id << "|"
@@ -80,7 +95,7 @@ std::istream& operator>>(std::istream& is, User& user) {
             try {
                 user.role = stoi(parts[4]);
 
-                // 5. Deserialize time_t to time_point
+                // 5. Deserialize time_t to internal time_point
                 time_t timeStamp = stoll(parts[5]);
                 user.createdAt = system_clock::from_time_t(timeStamp);
 
