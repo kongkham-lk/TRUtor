@@ -24,7 +24,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Student& student);
     friend std::istream& operator>>(std::istream& is, Student& student);
 
-    ~Student(); // Destructor
+    ~Student();
 };
 
 #endif // STUDENT_H

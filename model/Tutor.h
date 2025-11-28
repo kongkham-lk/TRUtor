@@ -14,10 +14,10 @@ public:
     Tutor(); 
     Tutor(string id, const string& email, const string& password, const string& name); 
 
-    // Stream operator 
+    //Stream operator 
     friend std::ostream& operator<<(std::ostream& os, const Tutor& tutor);
 
-    ~Tutor(); // Destructor
+    ~Tutor();
 };
 
 #endif // TUTOR_H

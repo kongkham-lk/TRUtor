@@ -54,7 +54,7 @@ UserRecord parseUserLine(const string& line) {
 
         try {
             timestamp_ll = stoll(timestampStr);
-            //Conversion from time_t (long long) to time_point
+            //Conversion from time_t in long long to time_point
             record.createdAt = system_clock::from_time_t((time_t)timestamp_ll);
         }
         catch (...) {

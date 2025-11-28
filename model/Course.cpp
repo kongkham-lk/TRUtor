@@ -45,6 +45,7 @@ std::istream& operator>>(std::istream& is, Course& course) {
             course.description_ = parts[2];
         }
         else {
+            //if format error occurs set the input stream to show failure
             is.setstate(std::ios::failbit);
             std::cerr << "Course::operator>> - Failed to parse line: " << line << std::endl;
         }

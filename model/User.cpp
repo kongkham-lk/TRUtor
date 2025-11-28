@@ -103,6 +103,7 @@ std::istream& operator>>(std::istream& is, User& user) {
             }
         }
         else {
+            //if format error occurs set state of input stream to fail
             is.setstate(std::ios::failbit); 
         }
     }
