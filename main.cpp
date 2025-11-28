@@ -1,6 +1,13 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <list>
+#include <algorithm>
+#include <sstream>
+#include <limits>
+#include <ctime>
+#include <set>
+
 #include "model/User.h"
 #include "model/Student.h"
 #include "model/Tutor.h"
@@ -47,7 +54,7 @@ int main() {
             cout << endl << string(29, '-') << " Student Sign Up " << string(29, '-') << endl;
             cout << "Enter Email: ";
             cin >> email;
-            cout << "Enter Password: ";
+            cout << "Enter password: ";
             cin >> password;
             cout << "Full Name (mixed case with no spaces): ";
             cin >> name;
@@ -65,7 +72,7 @@ int main() {
             cout << endl << string(30, '-') << " Tutor Sign Up " << string(30, '-') << endl;
             cout << "Enter Email: ";
             cin >> email;
-            cout << "Enter Password: ";
+            cout << "Enter password: ";
             cin >> password;
             cout << "Full Name (mixed case with no spaces): ";
             cin >> name;
@@ -81,7 +88,7 @@ int main() {
             cout << endl << string(36, '-')<< " Login " << string(36, '-') << endl;
             cout << "Enter Email: ";
             cin >> email;
-            cout << "Enter Password: ";
+            cout << "Enter password: ";
             cin >> password;
 
             if (!auth.login(email, password)) {
@@ -269,6 +276,13 @@ bool showUserMenu(const User& user, AuthService& auth) {
     bool isLoggedIn = true;
     while (isLoggedIn) {
         int choice = getChoiceFromUserMenu(user);
+
+        if (cin.fail()) {
+            cout << "Invalid input. Please enter a number." << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
 
         switch (choice) {
             case 1:

@@ -2,6 +2,9 @@
 #define COURSE_H
 
 #include <string>
+#include <iostream>
+#include <sstream>
+#include <fstream>
 
 class Course {
 public:
@@ -15,6 +18,10 @@ public:
     void setId(const std::string& id);
     void setTitle(const std::string& title);
     void setDescription(const std::string& description);
+
+    // Stream operator declarations for file I/O
+    friend std::ostream& operator<<(std::ostream& os, const Course& course);
+    friend std::istream& operator>>(std::istream& is, Course& course);
 
 private:
     std::string id_;
