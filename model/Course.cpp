@@ -15,14 +15,13 @@ void Course::setId(const std::string& id) { id_ = id; }
 void Course::setTitle(const std::string& title) { title_ = title; }
 void Course::setDescription(const std::string& description) { description_ = description; }
 
-// Write course data to a stream (e.g., file)
+//Write course data to a stream
 std::ostream& operator<<(std::ostream& os, const Course& course) {
-    // Format: ID|TITLE|DESCRIPTION
     os << course.id_ << "|" << course.title_ << "|" << course.description_;
     return os;
 }
 
-// Read course data from a stream (e.g., file)
+//Read course data from a stream 
 std::istream& operator>>(std::istream& is, Course& course) {
     std::string line;
     if (std::getline(is, line)) {
@@ -30,7 +29,7 @@ std::istream& operator>>(std::istream& is, Course& course) {
         std::string segment;
         std::vector<std::string> parts;
 
-        // Simple split logic based on the '|' delimiter
+        //Split based on the '|' delimiter
         size_t start = 0;
         size_t end = line.find('|');
         while (end != std::string::npos) {
@@ -46,7 +45,7 @@ std::istream& operator>>(std::istream& is, Course& course) {
             course.description_ = parts[2];
         }
         else {
-            is.setstate(std::ios::failbit); // Indicate failure if line format is wrong
+            is.setstate(std::ios::failbit);
             std::cerr << "Course::operator>> - Failed to parse line: " << line << std::endl;
         }
     }

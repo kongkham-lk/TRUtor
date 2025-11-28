@@ -9,13 +9,12 @@
 using namespace std;
 using namespace chrono;
 
-// This class is used for DB mapping as well
-class Tutor : public User { // extend User class
+class Tutor : public User { 
 public:
-    Tutor(); // Default constructor for file loading
-    Tutor(string id, const string& email, const string& password, const string& name); // Constructor, invoke when signup
+    Tutor(); 
+    Tutor(string id, const string& email, const string& password, const string& name); 
 
-    // Stream operator (only output needed, input handled by AuthService)
+    // Stream operator 
     friend std::ostream& operator<<(std::ostream& os, const Tutor& tutor);
 
     ~Tutor(); // Destructor

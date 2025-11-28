@@ -6,8 +6,6 @@
 
 using namespace std;
 
-// --- Helper Functions (File I/O) ---
-
 vector<Course> CourseService::loadCoursesFromFile() const {
     vector<Course> courses;
     ifstream file(COURSE_FILE);
@@ -17,7 +15,6 @@ vector<Course> CourseService::loadCoursesFromFile() const {
     while (getline(file, line)) {
         stringstream ss(line);
         Course course;
-        // The overloaded >> operator handles parsing the line
         if (ss >> course) {
             courses.push_back(course);
         }
@@ -26,13 +23,13 @@ vector<Course> CourseService::loadCoursesFromFile() const {
 }
 
 void CourseService::saveCoursesToFile(const vector<Course>& courses) const {
-    ofstream file(COURSE_FILE, ios::trunc); // Overwrite file
+    ofstream file(COURSE_FILE, ios::trunc);
     if (!file.is_open()) {
         cerr << "[CourseService] Error: Could not open " << COURSE_FILE << " for writing.\n";
         return;
     }
     for (const auto& course : courses) {
-        file << course << "\n"; // The overloaded << operator writes the course
+        file << course << "\n"; 
     }
 }
 
@@ -48,12 +45,9 @@ string CourseService::generateNextId(const vector<Course>& courses) const {
     return to_string(maxNum + 1);
 }
 
-// --- Public Service Methods ---
-
 void CourseService::createCourse(const Course& course) {
     vector<Course> courses = loadCoursesFromFile();
-
-    // Assign a new ID
+    //Assign a new ID
     Course newCourse = course;
     newCourse.setId(generateNextId(courses));
 
@@ -77,7 +71,7 @@ void CourseService::updateCourse(const Course& course) {
     bool found = false;
     for (auto& c : courses) {
         if (c.getId() == course.getId()) {
-            c = course; // Replace existing course with updated data
+            c = course;
             found = true;
             break;
         }

@@ -13,21 +13,18 @@
 using namespace std;
 using namespace chrono;
 
-// --- Private Helper Struct for Consistent Reading ---
 struct UserRecord {
     string id;
     string email;
     string password;
     string name;
     int role;
-    string major; // for Student, 'N/A' for Tutor
+    string major; 
     time_point<system_clock> createdAt;
     bool isValid = false;
 };
 
-/**
- * @brief Parses a single line from users.txt (pipe-delimited) into a UserRecord.
- */
+
 UserRecord parseUserLine(const string& line) {
     UserRecord record;
     if (line.empty()) return record;
@@ -37,7 +34,7 @@ UserRecord parseUserLine(const string& line) {
     long long timestamp_ll;
     string tempSeparator;
 
-    // File format: ID|EMAIL|PASSWORD|NAME|ROLE|TIMESTAMP||MAJOR
+    //File format ID|EMAIL|PASSWORD|NAME|ROLE|TIMESTAMP||MAJOR
     if (getline(ss, id, '|') &&
         getline(ss, email, '|') &&
         getline(ss, password, '|') &&
@@ -57,7 +54,7 @@ UserRecord parseUserLine(const string& line) {
 
         try {
             timestamp_ll = stoll(timestampStr);
-            // Conversion from time_t (long long) to time_point
+            //Conversion from time_t (long long) to time_point
             record.createdAt = system_clock::from_time_t((time_t)timestamp_ll);
         }
         catch (...) {
@@ -74,16 +71,13 @@ UserRecord parseUserLine(const string& line) {
     return record;
 }
 
-
-// --- AuthService Implementations ---
-
 // Constructor
 AuthService::AuthService()
     : loggedInUserId(""), loggedInUserRole(-1) {
     loadSession();
 }
 
-// Check if email already used
+//Check if email already used
 bool AuthService::userExistsByEmail(const string& email) const {
     ifstream file("users.txt");
     if (!file.is_open()) return false;
@@ -98,7 +92,7 @@ bool AuthService::userExistsByEmail(const string& email) const {
     return false;
 }
 
-// Simple ID generator
+//ID generator
 string AuthService::generateId(int role) const {
     ifstream file("users.txt");
     char prefix = (role == 0 ? 'S' : 'T');
@@ -119,22 +113,17 @@ string AuthService::generateId(int role) const {
                 }
             }
             catch (...) {
-                // Ignore malformed IDs
             }
         }
     }
     return string(1, prefix) + to_string(maxNum + 1);
 }
 
-// New Helper function
 bool AuthService::saveNewUser(const User& user, const string& major) {
     if (userExistsByEmail(user.getEmail())) {
         cerr << "Error: User with this email already exists." << endl;
         return false;
     }
-
-    // FIX C2664: user.getCreatedAt() already returns time_t (from the User.cpp fix), 
-    // so no further conversion is needed.
     time_t createdAt_t = user.getCreatedAt();
 
     ofstream file("users.txt", ios::app);
@@ -142,8 +131,6 @@ bool AuthService::saveNewUser(const User& user, const string& major) {
         cerr << "Error: Cannot open users.txt file for writing." << endl;
         return false;
     }
-
-    // New format: ID|EMAIL|PASSWORD|NAME|ROLE|TIMESTAMP||MAJOR
     file << user.getId() << "|"
         << user.getEmail() << "|"
         << user.getPassword() << "|"
@@ -172,13 +159,13 @@ bool AuthService::signUpStudent(const string& email, const string& password, con
 
 bool AuthService::signUpTutor(const string& email, const string& password, const string& name) {
     string id = generateId(1);
-    // Tutor constructor uses the fixed User base constructor
+    //Tutor constructor uses the fixed User base constructor
     Tutor newTutor(id, email, password, name);
 
     return saveNewUser(newTutor, "N/A");
 }
 
-// Login definition
+//Login definition
 bool AuthService::login(const string& email, const string& password) {
     ifstream file("users.txt");
     if (!file.is_open()) return false;
@@ -196,29 +183,29 @@ bool AuthService::login(const string& email, const string& password) {
     return false;
 }
 
-// Logout definition
+//Logout definition
 void AuthService::logout() {
     loggedInUserId = "";
     loggedInUserRole = -1;
     clearSession();
 }
 
-// check if logged in
+//Check if logged in
 bool AuthService::isLoggedIn() const {
     return !loggedInUserId.empty();
 }
 
-// current role
+//Current role
 int AuthService::currentRole() const {
     return loggedInUserRole;
 }
 
-// current user ID
+//Current user ID
 string AuthService::currentUserId() const {
     return loggedInUserId;
 }
 
-// Object access - Student
+//Student access
 Student AuthService::currentStudent() const {
     if (loggedInUserId.empty() || loggedInUserRole != 0)
         throw runtime_error("Not a student account or not logged in");
@@ -229,18 +216,15 @@ Student AuthService::currentStudent() const {
     string line;
     while (getline(file, line)) {
         UserRecord record = parseUserLine(line);
-        // NOTE: Student constructor will use the time_point from the record
+
         if (record.isValid && record.id == loggedInUserId && record.role == 0) {
-            // NOTE: The Student constructor likely needs to accept the creation time
-            // For now, it's implicitly using the default constructor, 
-            // but this logic is separate from the C2664 error.
             return Student(record.id, record.email, record.password, record.name, record.major);
         }
     }
     throw runtime_error("Student not found");
 }
 
-// Object access - Tutor
+//Tutor access
 Tutor AuthService::currentTutor() const {
     if (loggedInUserId.empty() || loggedInUserRole != 1)
         throw runtime_error("Not a tutor account or not logged in");
@@ -252,18 +236,12 @@ Tutor AuthService::currentTutor() const {
     while (getline(file, line)) {
         UserRecord record = parseUserLine(line);
         if (record.isValid && record.id == loggedInUserId && record.role == 1) {
-            // NOTE: Tutor constructor will use the time_point from the record
-            // For now, it's implicitly using the default constructor.
             return Tutor(record.id, record.email, record.password, record.name);
         }
     }
     throw runtime_error("Tutor not found");
 }
 
-
-/**
- * @brief Reads all user data from users.txt and returns them as a vector of User objects.
- */
 std::vector<User> AuthService::getAllUsers() const {
     std::vector<User> allUsers;
     std::ifstream file("users.txt");
@@ -276,8 +254,6 @@ std::vector<User> AuthService::getAllUsers() const {
     while (getline(file, line)) {
         UserRecord record = parseUserLine(line);
         if (record.isValid) {
-            // NOTE: This User constructor is implicitly discarding the createdAt time from the record
-            // as the User constructor you defined only takes 5 arguments.
             allUsers.push_back(User(record.id, record.email, record.password, record.name, record.role));
         }
     }
@@ -286,7 +262,7 @@ std::vector<User> AuthService::getAllUsers() const {
 }
 
 
-// load session from session.txt
+//Load session from session.txt
 void AuthService::loadSession() {
     ifstream file("session.txt");
     if (!file.is_open()) {
@@ -315,7 +291,7 @@ void AuthService::loadSession() {
     }
 }
 
-// save session to session.txt
+//Save session to session.txt
 void AuthService::saveSession() const {
     ofstream file("session.txt");
     if (!file.is_open()) {
@@ -327,7 +303,7 @@ void AuthService::saveSession() const {
     file.close();
 }
 
-// clear session file
+//Clear session file
 void AuthService::clearSession() const {
     ofstream file("session.txt", ios::trunc);
     if (!file.is_open()) {

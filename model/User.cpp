@@ -4,25 +4,20 @@
 #include <fstream>
 #include <vector>
 #include <stdexcept>
-#include "User.h" // Includes the corrected header
+#include "User.h" 
 
 using namespace std;
 using namespace chrono;
 
-// --- Constructors ---
 
-// FIX: Initialize createdAt with system_clock::time_point
 User::User()
     : id(""), email(""), password(""), name(""), role(-1), createdAt(system_clock::now()) {
 }
 
-// FIX C2511/C2550: The signature here MUST exactly match the declaration in User.h (const string& id)
-// This is the line that will fix C2511/C2550.
 User::User(const string& id, const string& email, const string& password, const string& name, int role)
     : id(id), email(email), password(password), name(name), role(role), createdAt(system_clock::now()) {
 }
 
-// --- Accessors and Mutators ---
 
 const string& User::getId() const { return this->id; }
 const string& User::getEmail() const { return this->email; }
@@ -32,7 +27,6 @@ void User::setPassword(const string& password) { this->password = password; }
 const string& User::getName() const { return this->name; }
 void User::setName(const string& name) { this->name = name; }
 
-// FIX: Convert the internal system_clock::time_point to time_t for return.
 time_t User::getCreatedAt() const {
     return system_clock::to_time_t(this->createdAt);
 }
@@ -43,13 +37,9 @@ void User::addSubject(const string& subject) { this->subjects.insert(subject); }
 void User::removeSubject(const string& subject) { this->subjects.erase(subject); }
 User::~User() {}
 
-// --- Stream Operators ---
 
-// Serialize User object to a stream
+//Serialize User object to a stream
 std::ostream& operator<<(std::ostream& os, const User& user) {
-    // ID|Email|Password|Name|Role|CreatedAt(time_t)|Subjects(comma-separated)
-
-    // 1. Convert internal time_point to time_t for serialization
     time_t timeStamp = system_clock::to_time_t(user.createdAt);
 
     os << user.id << "|"
@@ -59,7 +49,6 @@ std::ostream& operator<<(std::ostream& os, const User& user) {
         << user.role << "|"
         << timeStamp << "|";
 
-    // 2. Serialize subjects set
     bool first = true;
     for (const string& subject : user.subjects) {
         if (!first) os << ",";
@@ -69,7 +58,7 @@ std::ostream& operator<<(std::ostream& os, const User& user) {
     return os;
 }
 
-// Deserialize User object from a stream
+//Deserialize User object from a stream
 std::istream& operator>>(std::istream& is, User& user) {
     string line;
     if (std::getline(is, line)) {
@@ -77,7 +66,7 @@ std::istream& operator>>(std::istream& is, User& user) {
         string segment;
         vector<string> parts;
 
-        // Simple split logic based on the '|' delimiter
+        //Split based on the '|' delimiter
         size_t start = 0;
         size_t end = line.find('|');
         while (end != string::npos) {
@@ -85,7 +74,7 @@ std::istream& operator>>(std::istream& is, User& user) {
             start = end + 1;
             end = line.find('|', start);
         }
-        parts.push_back(line.substr(start)); // The last segment
+        parts.push_back(line.substr(start));
 
         if (parts.size() >= 6) {
             user.id = parts[0];
@@ -94,14 +83,10 @@ std::istream& operator>>(std::istream& is, User& user) {
             user.name = parts[3];
             try {
                 user.role = stoi(parts[4]);
-
-                // 5. Deserialize time_t to internal time_point
                 time_t timeStamp = stoll(parts[5]);
                 user.createdAt = system_clock::from_time_t(timeStamp);
-
-                // 6. Deserialize subjects (parts.size() == 7 for Student/Tutor + Major)
                 if (parts.size() >= 7) {
-                    string subjectsString = parts.back(); // Last part is always subjects
+                    string subjectsString = parts.back();
                     user.subjects.clear();
                     stringstream subject_ss(subjectsString);
                     string subject;
@@ -118,7 +103,7 @@ std::istream& operator>>(std::istream& is, User& user) {
             }
         }
         else {
-            is.setstate(std::ios::failbit); // Indicate failure if line format is wrong
+            is.setstate(std::ios::failbit); 
         }
     }
     return is;

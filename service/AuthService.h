@@ -7,7 +7,7 @@
 #include <sstream>
 #include "../model/Student.h"
 #include "../model/Tutor.h"
-#include "../model/User.h" // Include User for internal helpers
+#include "../model/User.h"
 
 using namespace std;
 
@@ -15,7 +15,7 @@ class AuthService {
 public:
     AuthService();
 
-    // Signup student
+    //Signup student
     bool signUpStudent(const string& email,
         const string& password,
         const string& name,
@@ -23,41 +23,40 @@ public:
 
     std::vector<User> getAllUsers() const;
 
-    // Signup tutor
+    //Signup tutor
     bool signUpTutor(const string& email,
         const string& password,
         const string& name);
 
-    // Login definition
+    //Login definition
     bool login(const string& email,
         const string& password);
 
-    // Logout definition
+    //Logout definition
     void logout();
 
-    // check if logged in
+    //Check if logged in
     bool isLoggedIn() const;
-    int currentRole() const;       // 0 = student, 1 = tutor, -1 = none
-    string currentUserId() const;  // just the ID string of current user
+    int currentRole() const;       
+    string currentUserId() const;  
 
-    // Object access (reconstruct from file)
     Student currentStudent() const;
     Tutor currentTutor() const;
 
 private:
-    bool userExistsByEmail(const string& email) const; // check if email exists
-    string generateId(int role) const;   // S1, S2... or T1, T2... using the role to decide id
+    bool userExistsByEmail(const string& email) const; 
+    string generateId(int role) const;   
 
-    // NEW: Helper to save user data to file
-    bool saveNewUser(const User& user, const string& major); // <-- ADDED THIS DECLARATION
+    //Helper to save user data to file
+    bool saveNewUser(const User& user, const string& major); 
 
-    void loadSession();         // load session from file
-    void saveSession() const;   // save session to file
-    void clearSession() const;  // clear session file
+    void loadSession();         
+    void saveSession() const;   
+    void clearSession() const;  
 
-    // The member variables that track the session state
+    //The member variables that track the session state
     string loggedInUserId;
-    int loggedInUserRole;       // 0 = student, 1 = tutor, -1 = none
+    int loggedInUserRole;       
 
 };
 

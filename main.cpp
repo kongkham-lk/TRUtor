@@ -13,16 +13,15 @@
 #include "model/Student.h"
 #include "model/Tutor.h"
 #include "model/Course.h"
-#include "model/Forum.h" // ADDED FORUM MODEL
+#include "model/Forum.h" 
 #include "service/AuthService.h"
 #include "service/CourseService.h"
 #include "service/MessageService.h"
-#include "service/ForumService.h" // ADDED FORUM SERVICE
+#include "service/ForumService.h" 
 
 using namespace std;
 
-// --- Time Helper ---
-// Converts time_t to a readable string format
+//Time function
 string timeToString(time_t time) {
     tm* ltm = localtime(&time);
     stringstream ss;
@@ -30,13 +29,12 @@ string timeToString(time_t time) {
         << 1 + ltm->tm_mon << "-"
         << ltm->tm_mday << " "
         << ltm->tm_hour << ":"
-        << ltm->tm_min; // Simplified time format
+        << ltm->tm_min; 
     return ss.str();
 }
 
-// --- Message/User Lookup Helpers (From main2.cpp) ---
 
-// Looks up a user's name based on their ID from the list of all users
+//Looks up a user's name based on their ID from the list of all users
 string getUserNameById(const string& userId, const vector<User>& allUsers) {
     for (const auto& user : allUsers) {
         if (user.getId() == userId) {
@@ -46,15 +44,12 @@ string getUserNameById(const string& userId, const vector<User>& allUsers) {
     return "Unknown User";
 }
 
-// Displays the message history and allows the user to send a reply
 void viewConversation(const string& currentUserId, const string& partnerId, AuthService& auth, MessageService& msgService);
 
-// Function to handle sending a new message to a selected user
+//Function to handle sending a new message to a selected user
 void sendMessageToUser(const string& currentUserId, AuthService& auth, MessageService& msgService) {
     vector<User> allUsers = auth.getAllUsers();
     vector<User> recipients;
-
-    // 1. Filter out the current user and list potential recipients
     cout << "\n------------------ Select Recipient -----------------\n";
     int index = 1;
     for (const auto& user : allUsers) {
@@ -81,12 +76,10 @@ void sendMessageToUser(const string& currentUserId, AuthService& auth, MessageSe
     if (choice == 0) return;
 
     User selectedRecipient = recipients[choice - 1];
-
-    // 2. Start conversation loop
     viewConversation(currentUserId, selectedRecipient.getId(), auth, msgService);
 }
 
-// Consolidated function to view conversation and handle continuous reply
+//Function to view conversation and handle continuous reply
 void viewConversation(const string& currentUserId, const string& partnerId, AuthService& auth, MessageService& msgService) {
     while (true) {
         list<Message> conversation = msgService.getMessagesBetween(currentUserId, partnerId);
@@ -114,11 +107,8 @@ void viewConversation(const string& currentUserId, const string& partnerId, Auth
             }
         }
         cout << "----------------------------------------------------------------\n";
-
         string replyContent;
         cout << "\nSend a message (Type !back to exit): \n";
-
-        // Consume the rest of the line from the previous cin
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         getline(cin, replyContent);
@@ -127,22 +117,17 @@ void viewConversation(const string& currentUserId, const string& partnerId, Auth
             cin.clear();
             return;
         }
-
-        if (replyContent.empty()) continue; // Skip if message is empty
-
-        // Send the message
+        if (replyContent.empty()) continue;
         time_t now = time(0);
         msgService.createMessage(currentUserId, partnerId, replyContent, now);
         cout << "\nMessage sent to " << partnerName << "." << endl;
     }
 }
 
-// Function to view existing conversations
+//Function to view existing conversations
 void viewAllMessages(const string& currentUserId, AuthService& auth, MessageService& msgService) {
-    // 1. Get all messages and find unique conversation partners
     list<Message> allMessages = msgService.getAllMessages();
     set<string> uniquePartnerIds;
-
     for (const auto& msg : allMessages) {
         if (msg.senderId == currentUserId) {
             uniquePartnerIds.insert(msg.receiverId);
@@ -151,8 +136,6 @@ void viewAllMessages(const string& currentUserId, AuthService& auth, MessageServ
             uniquePartnerIds.insert(msg.senderId);
         }
     }
-
-    // 2. Display list of active conversations
     cout << "\n--------------------- Your Conversations ----------------------\n";
     vector<string> conversationPartners(uniquePartnerIds.begin(), uniquePartnerIds.end());
 
@@ -177,20 +160,14 @@ void viewAllMessages(const string& currentUserId, AuthService& auth, MessageServ
     }
 
     if (choice == 0) return;
-
     string selectedPartnerId = conversationPartners[choice - 1];
-
-    // 3. Open selected conversation
     viewConversation(currentUserId, selectedPartnerId, auth, msgService);
 }
-
-// --- Forum Functions (From main1.cpp) ---
 
 void getForumDetail(const Forum& forum, const User& user)
 {
     cout << "Forum Id: " << forum.getId() << endl;
     cout << "CreateBy: " << user.getName() << endl;
-    // Note: The getCreatedAt() function in Forum likely returns a time_t/string, assuming Forum has a matching getter
     cout << "CreateAt: " << forum.getCreatedAt() << endl;
     cout << "Content: " << forum.getContent() << endl;
     cout << string(70, '-') << endl;
@@ -242,8 +219,8 @@ void getForumPage(const User& user)
             getline(cin, newContent);
             forumService.createForum(user.getId(), newContent);
             cout << endl << "Your Forum Successfully Created..." << endl;
-            printAllForums(forumService, user); // Refresh view
-            choice = -1; // Keep menu open
+            printAllForums(forumService, user);
+            choice = -1; 
         }
         else if (choice == 2)
         {
@@ -270,8 +247,6 @@ void getForumPage(const User& user)
                 cout << "Please enter new content: " << endl;
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 getline(cin, newContent);
-
-                // Note: The signature for editForum is assumed to take (userId, forumId, content)
                 forumService.editForum(user.getId(), targetForumId, newContent);
 
                 cout << endl << "Here is your updated forum detail:" << endl;
@@ -279,7 +254,7 @@ void getForumPage(const User& user)
                 Forum updatedForum = forumService.getForumById(targetForumId);
                 getForumDetail(updatedForum, user);
             }
-            choice = -1; // Keep menu open
+            choice = -1;
         }
         else if (choice == 3)
             break;
@@ -292,8 +267,6 @@ void getForumPage(const User& user)
     cout << endl << "Exit Forum Page..." << endl;
 }
 
-// --- Menu Functions (Modified to include Forum and MessageService) ---
-
 void showStudentMenu(const Student& student, AuthService& auth, MessageService& msgService);
 void showTutorMenu(const Tutor& tutor, AuthService& auth, MessageService& msgService);
 
@@ -305,8 +278,6 @@ int main() {
     CourseService courseService;
     MessageService msgService;
     // ForumService forumService; // Declared inside getForumPage where it is used
-
-    // --- Testing User Logic (From main2.cpp) ---
 
     Student s1("S1", "jay@mytru.ca", "11111", "Jay", "CS");
     Tutor t1("T1", "Kevin@mytru.ca", "22222", "Kevin");
@@ -329,15 +300,12 @@ int main() {
             }
         }
     }
-
-    // --- Testing Course Logic (from main2.cpp) ---
     Course c1("1", "CMPT 1250", "Intro to Programming");
     courseService.createCourse(c1);
     courseService.updateCourse(c1);
     courseService.getCourse("1");
     courseService.getAllCourses();
 
-    // The main application loop (From main2.cpp)
     while (true) {
         int choice;
 
@@ -416,7 +384,7 @@ int main() {
     }
 }
 
-// Student Menu Function (Modified for Forum option)
+//Student Menu Function
 void showStudentMenu(const Student& student, AuthService& auth, MessageService& msgService) {
     while (true) {
         int choice;
@@ -427,8 +395,8 @@ void showStudentMenu(const Student& student, AuthService& auth, MessageService& 
         cout << "2. View Messages\n";
         cout << "3. Send New Message\n";
         cout << "4. Tutoring Sessions\n";
-        cout << "5. Forum\n"; // ADDED FORUM
-        cout << "6. Logout\n"; // RE-INDEXED
+        cout << "5. Forum\n";
+        cout << "6. Logout\n";
         cout << "Choose an option (1-6): ";
 
         if (!(cin >> choice)) {
@@ -460,11 +428,11 @@ void showStudentMenu(const Student& student, AuthService& auth, MessageService& 
             cout << "\n(No session viewing implemented yet)\\n";
             break;
 
-        case 5: // NEW FORUM OPTION
+        case 5:
             getForumPage(student);
             break;
 
-        case 6: // LOGOUT
+        case 6:
             auth.logout();
             cout << "Logged out successfully." << endl;
             return;
@@ -475,7 +443,7 @@ void showStudentMenu(const Student& student, AuthService& auth, MessageService& 
     }
 }
 
-// Tutor Menu Function (Modified for Forum option)
+//Tutor Menu Function 
 void showTutorMenu(const Tutor& tutor, AuthService& auth, MessageService& msgService) {
     while (true) {
         int choice;
@@ -486,8 +454,8 @@ void showTutorMenu(const Tutor& tutor, AuthService& auth, MessageService& msgSer
         cout << "2. View Messages\n";
         cout << "3. Send New Message\n";
         cout << "4. Tutoring Sessions\n";
-        cout << "5. Forum\n"; // ADDED FORUM
-        cout << "6. Logout\n"; // RE-INDEXED
+        cout << "5. Forum\n"; 
+        cout << "6. Logout\n"; 
         cout << "Choose an option (1-6): ";
 
         if (!(cin >> choice)) {
@@ -518,11 +486,11 @@ void showTutorMenu(const Tutor& tutor, AuthService& auth, MessageService& msgSer
             cout << "\n(No session management implemented yet)\\n";
             break;
 
-        case 5: // NEW FORUM OPTION
+        case 5: 
             getForumPage(tutor);
             break;
 
-        case 6: // LOGOUT
+        case 6: 
             auth.logout();
             cout << "Logged out successfully." << endl;
             return;

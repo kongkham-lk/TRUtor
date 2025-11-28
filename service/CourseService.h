@@ -11,7 +11,6 @@ class CourseService {
 private:
     const std::string COURSE_FILE = "courses.txt";
 
-    // Helper functions for file I/O
     std::vector<Course> loadCoursesFromFile() const;
     void saveCoursesToFile(const std::vector<Course>& courses) const;
     std::string generateNextId(const std::vector<Course>& courses) const;
@@ -19,7 +18,7 @@ private:
 public:
     CourseService() = default;
 
-    void createCourse(const Course& course); // Will assign an ID and save
+    void createCourse(const Course& course);
     Course getCourse(const std::string& id);
     void updateCourse(const Course& course);
     void deleteCourse(const std::string& id);
