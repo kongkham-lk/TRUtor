@@ -18,6 +18,7 @@
 #include "service/CourseService.h"
 #include "service/MessageService.h"
 #include "service/ForumService.h" 
+#include "service/FeedbackService.h"
 
 using namespace std;
 
@@ -267,8 +268,21 @@ void getForumPage(const User& user)
     cout << endl << "Exit Forum Page..." << endl;
 }
 
-void showStudentMenu(const Student& student, AuthService& auth, MessageService& msgService);
-void showTutorMenu(const Tutor& tutor, AuthService& auth, MessageService& msgService);
+void showStudentMenu(
+    const Student& student,
+    AuthService& auth,
+    MessageService& msgService,
+ //   const vector<User*>& users,
+    FeedbackService& feedbackService
+);
+
+void showTutorMenu(
+    const Tutor& tutor,
+    AuthService& auth,
+    MessageService& msgService,
+ //   const vector<User*>& users,
+    FeedbackService& feedbackService
+);
 
 int main() {
     cout << "\n..........Application Starting...........\\n" << endl;
@@ -277,29 +291,8 @@ int main() {
     AuthService auth;
     CourseService courseService;
     MessageService msgService;
-    // ForumService forumService; // Declared inside getForumPage where it is used
-
-    Student s1("S1", "jay@mytru.ca", "11111", "Jay", "CS");
-    Tutor t1("T1", "Kevin@mytru.ca", "22222", "Kevin");
-
-    vector<User*> users;
-    users.push_back(&s1);
-    users.push_back(&t1);
-
-    for (User* user : users) {
-        if (user->getRole() == 0) {
-            Student* s = dynamic_cast<Student*>(user);
-            if (s) {
-                cout << "Student: " << s->getName() << ", Major: " << s->getMajor() << endl;
-            }
-        }
-        else {
-            Tutor* t = dynamic_cast<Tutor*>(user);
-            if (t) {
-                cout << "Tutor: " << t->getName() << endl;
-            }
-        }
-    }
+    FeedbackService feedbackService("feedback.txt");
+   
     Course c1("1", "CMPT 1250", "Intro to Programming");
     courseService.createCourse(c1);
     courseService.updateCourse(c1);
@@ -311,12 +304,15 @@ int main() {
 
         if (auth.isLoggedIn()) {
             if (auth.currentRole() == 0) {
-                showStudentMenu(auth.currentStudent(), auth, msgService);
+                showStudentMenu(auth.currentStudent(), auth, msgService, feedbackService);
             }
             else if (auth.currentRole() == 1) {
-                showTutorMenu(auth.currentTutor(), auth, msgService);
+                showTutorMenu(auth.currentTutor(), auth, msgService, feedbackService);
             }
         }
+
+
+    
 
         cout << "\n---------------------- Main Menu ----------------------\n";
         cout << "1. Login\n";
@@ -385,19 +381,25 @@ int main() {
 }
 
 //Student Menu Function
-void showStudentMenu(const Student& student, AuthService& auth, MessageService& msgService) {
+void showStudentMenu(
+    const Student& student,
+    AuthService& auth,
+    MessageService& msgService,
+    FeedbackService& feedbackService
+) {
     while (true) {
         int choice;
 
-        cout << "\n--------------------- Student Menu --------------------\\n";
+        cout << "\n--------------------- Student Menu --------------------\n";
         cout << "Welcome, " << student.getName() << "!\n";
         cout << "1. View Profile\n";
         cout << "2. View Messages\n";
         cout << "3. Send New Message\n";
         cout << "4. Tutoring Sessions\n";
         cout << "5. Forum\n";
-        cout << "6. Logout\n";
-        cout << "Choose an option (1-6): ";
+        cout << "6. Leave Feedback\n";
+        cout << "7. Logout\n";
+        cout << "Choose an option (1-7): ";
 
         if (!(cin >> choice)) {
             cout << "Invalid input. Please enter a number." << endl;
@@ -408,7 +410,7 @@ void showStudentMenu(const Student& student, AuthService& auth, MessageService& 
 
         switch (choice) {
         case 1:
-            cout << "\n------------------- Student Profile -------------------\\n";
+            cout << "\n------------------- Student Profile -------------------\n";
             cout << "ID: " << student.getId() << "\n";
             cout << "Name: " << student.getName() << "\n";
             cout << "Email: " << student.getEmail() << "\n";
@@ -424,15 +426,61 @@ void showStudentMenu(const Student& student, AuthService& auth, MessageService& 
             break;
 
         case 4:
-            cout << "\n------------------- View Tutoring Sessions -------------------\\n";
-            cout << "\n(No session viewing implemented yet)\\n";
+            cout << "\n(No session viewing implemented yet)\n";
             break;
 
         case 5:
             getForumPage(student);
             break;
 
-        case 6:
+        case 6: // Feedback
+        {
+            vector<User> allUsers = auth.getAllUsers();
+            vector<User> tutors;
+            for (const User& u : allUsers) {
+                if (u.getRole() == 1) { // 1 is the role for Tutor
+                    tutors.push_back(u);
+                }
+            }
+
+            if (tutors.empty()) {
+                cout << "No tutors found to give feedback.\n";
+                break;
+            }
+
+            cout << "Select a tutor to give feedback:\n";
+            for (size_t i = 0; i < tutors.size(); ++i)
+                cout << i + 1 << ". " << tutors[i].getName() << endl;
+
+            int tutorChoice;
+            cin >> tutorChoice;
+            if (tutorChoice < 1 || tutorChoice > tutors.size()) {
+                cout << "Invalid choice.\n";
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                break;
+            }
+
+            int studentIdInt = stoi(student.getId().substr(1));
+            int tutorIdInt = stoi(tutors[tutorChoice - 1].getId().substr(1));
+
+            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // clear leftover newline
+
+            string feedbackContent;
+            cout << "Enter your feedback: ";
+            getline(cin, feedbackContent);
+
+            feedbackService.addFeedback(
+                studentIdInt,
+                tutorIdInt,
+                feedbackContent
+            );
+
+            cout << "Feedback submitted.\n";
+            break;
+        }
+
+        case 7:
             auth.logout();
             cout << "Logged out successfully." << endl;
             return;
@@ -443,20 +491,25 @@ void showStudentMenu(const Student& student, AuthService& auth, MessageService& 
     }
 }
 
-//Tutor Menu Function 
-void showTutorMenu(const Tutor& tutor, AuthService& auth, MessageService& msgService) {
+void showTutorMenu(
+    const Tutor& tutor,
+    AuthService& auth,
+    MessageService& msgService,
+    FeedbackService& feedbackService
+) {
     while (true) {
         int choice;
 
-        cout << "\n---------------------- Tutor Menu ---------------------\\n";
+        cout << "\n---------------------- Tutor Menu ---------------------\n";
         cout << "Welcome, " << tutor.getName() << "!\n";
         cout << "1. View Profile\n";
         cout << "2. View Messages\n";
         cout << "3. Send New Message\n";
         cout << "4. Tutoring Sessions\n";
-        cout << "5. Forum\n"; 
-        cout << "6. Logout\n"; 
-        cout << "Choose an option (1-6): ";
+        cout << "5. Forum\n";
+        cout << "6. View Feedback\n";
+        cout << "7. Logout\n";
+        cout << "Choose an option (1-7): ";
 
         if (!(cin >> choice)) {
             cout << "Invalid input. Please enter a number." << endl;
@@ -467,7 +520,7 @@ void showTutorMenu(const Tutor& tutor, AuthService& auth, MessageService& msgSer
 
         switch (choice) {
         case 1:
-            cout << "\n------------------- Tutor Profile -------------------\\n";
+            cout << "\n------------------- Tutor Profile -------------------\n";
             cout << "ID: " << tutor.getId() << "\n";
             cout << "Name: " << tutor.getName() << "\n";
             cout << "Email: " << tutor.getEmail() << "\n";
@@ -482,15 +535,28 @@ void showTutorMenu(const Tutor& tutor, AuthService& auth, MessageService& msgSer
             break;
 
         case 4:
-            cout << "\n------------------- Manage Tutoring Sessions -------------------\\n";
-            cout << "\n(No session management implemented yet)\\n";
+            cout << "\n(No session management implemented yet)\n";
             break;
 
-        case 5: 
+        case 5:
             getForumPage(tutor);
             break;
 
-        case 6: 
+        case 6:
+        {
+            vector<Feedback> tutorFeedback = feedbackService.getFeedbackForTutor(stoi(tutor.getId().substr(1)));
+            if (tutorFeedback.empty()) {
+                cout << "No feedback yet.\n";
+            }
+            else {
+                cout << "Feedback received:\n";
+                for (const auto& f : tutorFeedback)
+                    cout << "Student ID " << f.studentId << ": " << f.content << endl;
+            }
+            break;
+        }
+
+        case 7:
             auth.logout();
             cout << "Logged out successfully." << endl;
             return;
