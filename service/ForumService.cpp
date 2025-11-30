@@ -169,7 +169,7 @@ void ForumService::editForumContent(const string& requestUserId, const int& foru
 
 bool ForumService::addForumReplyId(vector<Forum>& forums, const int& parentForumId)
 {
-    cout << endl << "Update replyId of ForumId: " << parentForumId << endl;
+    // cout << endl << "Update replyId of ForumId: " << parentForumId << endl;
     if (!forums.empty())
     {
         int lastId = getLastId(forums);
@@ -179,9 +179,9 @@ bool ForumService::addForumReplyId(vector<Forum>& forums, const int& parentForum
             {
                 forums[i].addReplyForumId(lastId);
 
-                cout << endl << "Start Debugging...." << endl;
-                logForumForDebug(forums[i]);
-                cout << "End Debugging...." << endl;
+                // cout << endl << "Start Debugging...." << endl;
+                // logForumForDebug(forums[i]);
+                // cout << "End Debugging...." << endl;
                 return true;
             }
         }
@@ -191,20 +191,29 @@ bool ForumService::addForumReplyId(vector<Forum>& forums, const int& parentForum
     return false;
 }
 
-bool ForumService::removeForumReplyId(vector<Forum> forums, const int& mainForumId, const int& replyForumId) // mainForumId = the original post
+void ForumService::removeForumReplyId(vector<Forum>& forums, const Forum& targetForum, const vector<int>& toRemoveIds)
 {
-    if (!forums.empty())
-    {
-        for (Forum& targetForum : forums)
-        {
-            if (targetForum.getId() == mainForumId)
-            {
-                targetForum.removeReplyForumId(replyForumId);
-                return true;
+    int parentId = targetForum.getParentForumId();
+    if (parentId != -1) {
+        for (auto& f : forums) {
+            if (f.getId() == parentId) {
+                for (int id : toRemoveIds)
+                    f.removeReplyForumId(id);
             }
         }
     }
-    return false;
+}
+
+void ForumService::collectAllDescendants(int forumId, const map<int, Forum>& forumById, vector<int>& toRemove)
+{
+    toRemove.push_back(forumId);
+
+    const Forum& f = forumById.at(forumId);
+    for (int childId : f.getReplyForumsId()) {
+        if (forumById.contains(childId)) {
+            collectAllDescendants(childId, forumById, toRemove);
+        }
+    }
 }
 
 void ForumService::deleteForums(const string& requestUserId, const int& forumId)
@@ -217,24 +226,28 @@ void ForumService::deleteForums(const string& requestUserId, const int& forumId)
     {
         if (vector<Forum> forums = loadForums(); !forums.empty())
         {
-            // Delete the main forum and all its reply forums under the forum
-            vector<int> forumIdToRemove = targetForum.getReplyForumsId();
-            forumIdToRemove.push_back(forumId);
-            int count = forumIdToRemove.size();
-            for (int i = 0; i < forums.size(); i++)
-            {
-                if (checkIfContain(forumIdToRemove, forums[i].getId())) // check every single forum is it is either main or reply forum
-                {
-                    forums.erase(forums.begin() + i);
-                    count--;
-                }
-                if (count == 0) // stop finding if found and delete all the reply forum
-                    break;
-            }
+            // Build dictionary
+            map<int, Forum> forumById;
+            for (const auto& f : forums)
+                forumById[f.getId()] = f;
 
-            // if the main forum has parentForumId, remove its id from its parentForum's replyForumsId as well
-            int parentForumId = targetForum.getParentForumId();
-            removeForumReplyId(forums, parentForumId, forumId);
+            // Get all descendant reply forum, recursively
+            vector<int> toRemoveIds;
+            collectAllDescendants(forumId, forumById, toRemoveIds);
+
+            // Remove all descendant reply forum from the list
+            forums.erase(
+                remove_if(
+                    forums.begin(),
+                    forums.end(),
+                    [&](const Forum& f) {
+                        return checkIfContain(toRemoveIds, f.getId());
+                    }),
+                forums.end()
+            );
+
+            // Remove forumId from parent's replyForumsId
+            removeForumReplyId(forums, targetForum, toRemoveIds);
             saveForums(forums);
         }
         else
@@ -247,11 +260,10 @@ void ForumService::replyToForum(const string& responseUserId, const string& cont
     // create a new reply forum and push to list (Not save to file yet!)
     vector<Forum> forums = createForum(responseUserId, content, parentForumId);
 
-
     // update its parentForum's replyForumId list
     if (addForumReplyId(forums, parentForumId))
     {
-        logAllForumForDebug(forums); // for debugging
+        // logAllForumForDebug(forums); // for debugging
         saveForums(forums);
     }
     else
@@ -267,9 +279,13 @@ vector<ForumResponse> ForumService::getAllResponses(const map<int, ForumResponse
     return result;
 }
 
+
 ForumResponse ForumService::buildTree(const int forumId, const map<int, Forum>& forumById)
 {
+    // cout << "Lookup ForumById: " << forumId << endl;
     const Forum& rootForum = forumById.at(forumId);
+    // cout << "Found: " << rootForum.getId() << endl;
+
     ForumResponse resp(rootForum); // root node
     const vector<int>& children = rootForum.getReplyForumsId();
 

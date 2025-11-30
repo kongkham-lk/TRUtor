@@ -20,10 +20,11 @@ private:
     bool checkIfContain(const vector<int>& refIds, const int& targetId);
     int getLastId(const vector<Forum>& forums);
     ForumResponse buildTree(int forumId, const map<int, Forum>& forumById);
+    void collectAllDescendants(int forumId, const map<int, Forum>& forumById, vector<int>& toRemove);
     vector<ForumResponse> constructForumResponse(const vector<Forum>& forums);
     vector<Forum> createForum(const string& creatorId, const string& content, int parentForumId);
     bool addForumReplyId(vector<Forum>& forums, const int& mainForumId) ;
-    bool removeForumReplyId(vector<Forum> forums, const int& mainForumId, const int& forumId) ;
+    void removeForumReplyId(vector<Forum>& forums, const Forum& targetForum, const vector<int>& toRemoveIds) ;
     
 public:
     ForumService(); // New: Constructor to load Forums on startup

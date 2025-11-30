@@ -193,15 +193,28 @@ void getForumDetail(const Forum& forum, const string& creatorName, int indentSiz
 //         printForumResponse(child, indent + 4);
 // }
 
+string fetchForumCreatorName(Forum mainForum, const map<string, string>& userIdByNameDict)
+{
+    string creatorName = "(Unknown User)";
+    auto targetUser = userIdByNameDict.find(mainForum.getCreatorId());
+    if (targetUser != userIdByNameDict.end())
+        creatorName = targetUser->second;
+    else
+        cout << ">>> Fail to fetch creator of the post From DB!" << endl;
+    return creatorName;
+}
+
 void getForumResponseDetail(const ForumResponse& forum, const map<string, string>& userIdByNameDict, int indent = 0)
 {
     Forum mainForum = forum.getRoot();
 
     // // print original post
-    // cout << "Lookup UserId (mainForum): " << mainForum.getId() << endl;
     if (mainForum.getId() == -1) return;
 
-    getForumDetail(mainForum, userIdByNameDict.at(mainForum.getCreatorId()), indent);
+    // cout << "Lookup UserId (mainForum): " << mainForum.getId() << endl;
+    string creatorName = fetchForumCreatorName(mainForum, userIdByNameDict);
+    // cout << "Found: " << creatorName << endl;
+    getForumDetail(mainForum, creatorName, indent);
 
     // print all its sub reply post
     if (vector<ForumResponse> replyForums = forum.getReplies(); !replyForums.empty())
@@ -268,7 +281,9 @@ bool printAllForums(const vector<Forum>& forums, const AuthService& auth)
         if (forum.getId() == -1) continue;
 
         // cout << "Lookup UserId (forum): " << forum.getCreatorId() << endl;
-        getForumDetail(forum, userIdByNameDict.at(forum.getCreatorId()));
+        string creatorName = fetchForumCreatorName(forum, userIdByNameDict);
+        // cout << "found: " << creatorName << endl;
+        getForumDetail(forum, creatorName);
     }
     return true;
 }
