@@ -348,8 +348,7 @@ void getForumPage(const User& user, const AuthService& auth)
             forumService.createForumAndSave(user.getId(), newContent);
 
             cout << endl << "Forum Creation Successfully..." << endl;
-            vector<ForumResponse> forums = forumService.getAllForums();
-            printAllForumsResponse(forums, auth);
+            printAllForumsResponse(forumService.getAllForums(), auth);
             choice = -1; 
         }
         else if (choice == 2) // Reply Forum
@@ -359,17 +358,7 @@ void getForumPage(const User& user, const AuthService& auth)
                 string newContent = getForumContentFromUser();
                 forumService.replyToForum(user.getId(), newContent, targetForumId);
 
-                vector<ForumResponse> updatedForums = forumService.getAllForums();
-                map<string, string> userIdByNameDict = getAllUsers(auth);
-                for (ForumResponse updatedForum : updatedForums)
-                {
-                    if (updatedForum.getRoot().getId() == targetForumId)
-                    {
-                        cout << endl << "Found Forum Updated..." << endl;
-                        getForumResponseDetail(updatedForum, userIdByNameDict);
-                        break;
-                    }
-                }
+                printAllForumsResponse(forumService.getAllForums(), auth);
             }
             choice = -1;
         }
@@ -396,16 +385,15 @@ void getForumPage(const User& user, const AuthService& auth)
                         string newContent = getForumContentFromUser();
                         forumService.editForumContent(user.getId(), targetForumId, newContent);
 
-                        Forum updatedForum = forumService.getForumById(targetForumId);
-                        showForumUpdateResult(user, updatedForum);
+                        cout << endl << "Forum Content Update Successfully..." << endl;
+                        printAllForumsResponse(forumService.getAllForums(), auth);
                     }
                     else if (subChoice == 2) // Delete the form
                     {
                         forumService.deleteForums(user.getId(), targetForumId);
 
                         cout << endl << "Forum Deletion Successfully..." << endl;
-                        vector<ForumResponse> forums = forumService.getAllForums();
-                        printAllForumsResponse(forums, auth);
+                        printAllForumsResponse(forumService.getAllForums(), auth);
                     }
                 }
             }
