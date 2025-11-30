@@ -173,7 +173,7 @@ void getForumDetail(const Forum& forum, const string& creatorName, int indentSiz
     cout << string(indentSize, ' ') << "CreateBy: " << creatorName << endl;
     cout << string(indentSize, ' ') << "CreateAt: " << forum.getCreatedAt() << endl;
     cout << string(indentSize, ' ') << "Content: " << forum.getContent() << endl;
-
+    //
     // cout << endl << "Start Debugging...." << endl;
     // vector<int> replyForumsIds = forum.getReplyForumsId();
     // string replyForumsIdsStr = "_";

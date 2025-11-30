@@ -101,13 +101,21 @@ bool ForumService::checkIfContain(const vector<int>& refIds, const int& targetId
     return ranges::any_of(refIds, [&](int id){ return id == targetId; });
 }
 
-vector<Forum> ForumService::createForum(const string& creatorId, const string& content, int parentForumId) const
+int ForumService::getLastId(const vector<Forum>& forums)
+{
+    int lastId = -1;
+    for (const auto& f : forums)
+        lastId = max(lastId, f.getId());
+    return lastId;
+}
+
+vector<Forum> ForumService::createForum(const string& creatorId, const string& content, int parentForumId)
 {
     // cout << endl << "Start creating new forum... " << endl;
     // cout << "Retrieving all Forum..." << endl;
     vector<Forum> forums = loadForums();
 
-    int lastId = forums.empty() ? -1 : forums[forums.size()-1].getId();
+    int lastId = getLastId(forums);
     // cout << "Got lastId: " << lastId+1 << endl;
 
     // cout << "Creating new forum..." << endl;
@@ -117,9 +125,24 @@ vector<Forum> ForumService::createForum(const string& creatorId, const string& c
     return forums;
 }
 
-void ForumService::createForumAndSave(const string& creatorId, const string& content, int parentForumId) const
+void logForumForDebug(const Forum& forum)
 {
+    string replyForumsIdsStr = "_";
+    for (int i = 0; i < forum.getReplyForumsId().size(); i++)
+        replyForumsIdsStr += to_string(forum.getReplyForumsId()[i]) + "_";
+    cout << forum.getId() << ", " << forum.getContent() << ", " << forum.getParentForumId() << " " << replyForumsIdsStr << endl;
+}
 
+void logAllForumForDebug(const vector<Forum>& forums)
+{
+    cout << endl << "Start Debugging...." << endl;
+    for (const Forum& forum : forums)
+        logForumForDebug(forum);
+    cout << endl << "End Debugging...." << endl;
+}
+
+void ForumService::createForumAndSave(const string& creatorId, const string& content, int parentForumId)
+{
     vector<Forum> forums = createForum(creatorId, content, parentForumId);
 
     // cout << "Saving new forum..." << endl;
@@ -144,17 +167,21 @@ void ForumService::editForumContent(const string& requestUserId, const int& foru
         cout << "There is no forum to update!" << endl;
 }
 
-bool ForumService::addForumReplyId(vector<Forum> forums, const int& parentForumId)
+bool ForumService::addForumReplyId(vector<Forum>& forums, const int& parentForumId)
 {
-    cout << "Update replyId of ForumId: " << parentForumId << endl;
+    cout << endl << "Update replyId of ForumId: " << parentForumId << endl;
     if (!forums.empty())
     {
-        for (Forum& forum : forums)
+        int lastId = getLastId(forums);
+        for (int i = 0; i < forums.size(); i++)
         {
-            if (forum.getId() == parentForumId)
+            if (forums[i].getId() == parentForumId)
             {
-                int lastId = forums.empty() ? 0 : forums[forums.size()-1].getId();
-                forum.addReplyForumId(lastId);
+                forums[i].addReplyForumId(lastId);
+
+                cout << endl << "Start Debugging...." << endl;
+                logForumForDebug(forums[i]);
+                cout << "End Debugging...." << endl;
                 return true;
             }
         }
@@ -180,7 +207,7 @@ bool ForumService::removeForumReplyId(vector<Forum> forums, const int& mainForum
     return false;
 }
 
-void ForumService::deleteForums(const string& requestUserId, const int& forumId) const
+void ForumService::deleteForums(const string& requestUserId, const int& forumId)
 {
     if (Forum targetForum = getForumById(forumId); targetForum.getId() == -1)
         cerr << "Fail to delete, the request forum with ID does not exist!" << endl;
@@ -215,14 +242,18 @@ void ForumService::deleteForums(const string& requestUserId, const int& forumId)
     }
 }
 
-void ForumService::replyToForum(const string& responseUserId, const string& content, const int& parentForumId) const
+void ForumService::replyToForum(const string& responseUserId, const string& content, const int& parentForumId)
 {
     // create a new reply forum and push to list (Not save to file yet!)
     vector<Forum> forums = createForum(responseUserId, content, parentForumId);
 
+
     // update its parentForum's replyForumId list
     if (addForumReplyId(forums, parentForumId))
+    {
+        logAllForumForDebug(forums); // for debugging
         saveForums(forums);
+    }
     else
         cerr << "The target forum that you attempt to reply is Invalid!" << endl;
 }
@@ -254,9 +285,9 @@ ForumResponse ForumService::buildTree(const int forumId, const map<int, Forum>& 
 }
 
 
-vector<ForumResponse> ForumService::constructForums(const vector<Forum>& forums)
+vector<ForumResponse> ForumService::constructForumResponse(const vector<Forum>& forums)
 {
-    // cout << "constructForums..." << endl;
+    // cout << "constructForumResponse..." << endl;
     map<int, Forum> forumById;
     for (const Forum& f : forums)
         forumById[f.getId()] = f;
@@ -273,10 +304,10 @@ vector<ForumResponse> ForumService::constructForums(const vector<Forum>& forums)
     return roots;
 }
 
-vector<ForumResponse> ForumService::getAllForums() const
+vector<ForumResponse> ForumService::getAllForums()
 {
     // cout << "getAllForums..." << endl;
-    return constructForums(loadForums());
+    return constructForumResponse(loadForums());
 }
 
 Forum ForumService::getForumById(const int& forumId) const
