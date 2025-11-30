@@ -71,12 +71,14 @@ vector<Forum> ForumService::loadForums() const
 
         if (stream >> forumId >> creatorId >> content >> timestamp >> parentId >> replyForumsIdsStr)
         {
+            ranges::replace(replyForumsIdsStr, '_', ' ');
             ranges::replace(content, '_', ' ');
             Forum newForum(forumId, creatorId, content, parentId, timestamp);
 
             int num;
             stringstream ss(replyForumsIdsStr);
             while (ss >> num) {
+                // cout << "Push ReplyId: " << num << endl;
                 newForum.addReplyForumId(int(num));
             }
             forums.push_back(newForum);
@@ -240,8 +242,11 @@ ForumResponse ForumService::buildTree(const int forumId, const map<int, Forum>& 
     ForumResponse resp(rootForum); // root node
     const vector<int>& children = rootForum.getReplyForumsId();
 
+    // cout << "roorID: " << rootForum.getId();
+
     for (int childId : children) {
         if (forumById.contains(childId)) {
+            // cout << " -> " << childId << endl;
             resp.addReply(buildTree(childId, forumById));  // recursion
         }
     }
@@ -251,12 +256,14 @@ ForumResponse ForumService::buildTree(const int forumId, const map<int, Forum>& 
 
 vector<ForumResponse> ForumService::constructForums(const vector<Forum>& forums)
 {
+    // cout << "constructForums..." << endl;
     map<int, Forum> forumById;
     for (const Forum& f : forums)
         forumById[f.getId()] = f;
 
     vector<ForumResponse> roots;
 
+    // cout << "buildTree..." << endl;
     for (const Forum& f : forums) {
         if (f.getParentForumId() == -1) {  // root forum
             roots.push_back(buildTree(f.getId(), forumById));
@@ -268,6 +275,7 @@ vector<ForumResponse> ForumService::constructForums(const vector<Forum>& forums)
 
 vector<ForumResponse> ForumService::getAllForums() const
 {
+    // cout << "getAllForums..." << endl;
     return constructForums(loadForums());
 }
 

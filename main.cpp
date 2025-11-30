@@ -182,7 +182,7 @@ void getForumDetail(const Forum& forum, const string& creatorName, int indentSiz
     // cout << string(indentSize, ' ') << "replyIds: " << replyForumsIdsStr << endl;
     // cout << endl << "End Debugging...." << endl;
 
-    cout << string(70, '-') << endl;
+    cout << string(indentSize, ' ') << string(70-indentSize, '-') << endl;
 }
 //
 // void printForumResponse(const ForumResponse& r, int indent = 0)
@@ -206,13 +206,13 @@ void getForumResponseDetail(const ForumResponse& forum, const map<string, string
     // print all its sub reply post
     if (vector<ForumResponse> replyForums = forum.getReplies(); !replyForums.empty())
     {
-        cout << string(indent, '-') << "Reply Post " << string(60-indent, '-') << endl;
+        cout << string(indent, ' ') << "Reply Post " << string(60-indent, '-') << endl;
         for (const ForumResponse& child : forum.getReplies())
             getForumResponseDetail(child, userIdByNameDict, indent + 4);
     }
     else
     {
-        cout << "No Reply Post!" << endl;
+        cout << string(indent, ' ') << "No Reply Post!" << endl;
         cout << string(70, '-') << endl;
     }
 }
