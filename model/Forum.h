@@ -10,7 +10,7 @@ using namespace chrono;
 class Forum {
 private:
     int id;
-    string userId;   // The user ID that create forum post
+    string creatorId;   // The user ID that create forum post
     string content;
     time_t createdAt;
 
@@ -20,7 +20,7 @@ public:
 
     const int getId() const;
 
-    const string& getUserId() const;
+    const string& getCreatorrId() const;
 
     const string& getContent() const;
     void setContent(const string& content);

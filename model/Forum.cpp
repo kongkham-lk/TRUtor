@@ -16,8 +16,8 @@ const int Forum::getId() const {
     return this->id;
 }
 
-const string& Forum::getUserId() const {
-    return this->userId;
+const string& Forum::getCreatorrId() const {
+    return this->creatorId;
 }
 
 const string& Forum::getContent() const {

@@ -32,7 +32,7 @@ void ForumService::saveForums(const vector<Forum>& forums) const {
         ranges::replace(content, ' ', '_');
 
         file << newForum.getId() << " "
-            << newForum.getUserId() << " "
+            << newForum.getCreatorrId() << " "
             << (long long) newForum.getCreatedAt() << " "
             << content << "\n";
     }
@@ -56,7 +56,7 @@ void ForumService::createForum(const string& creatorId, const string& content) c
     saveForums(forums); // Save the new list to the file
 }
 
-void ForumService::editForum(const string& requestUserId, int forumId, const string& newContent) const
+void ForumService::editForum(const string& requestUserId, const int& forumId, const string& newContent) const
 {
     if (vector<Forum> forums = getAllForumsByUserId(requestUserId); !forums.empty())
     {
@@ -72,7 +72,7 @@ void ForumService::editForum(const string& requestUserId, int forumId, const str
     }
 }
 
-void ForumService::deleteForums(const string& requestUserId, int forumId) const
+void ForumService::deleteForums(const string& requestUserId, const int& forumId) const
 {
     if (vector<Forum> forums = getAllForumsByUserId(requestUserId); !forums.empty())
     {
@@ -134,7 +134,7 @@ vector<Forum> ForumService::getAllForumsByUserId(const string& userId) const
     {
         vector<Forum> result;
         for (const auto& forum : forums)
-            if (forum.getUserId() == userId)
+            if (forum.getCreatorrId() == userId)
                 result.push_back(forum);
         return result;
     }

@@ -165,16 +165,16 @@ void viewAllMessages(const string& currentUserId, AuthService& auth, MessageServ
     viewConversation(currentUserId, selectedPartnerId, auth, msgService);
 }
 
-void getForumDetail(const Forum& forum, const User& user)
+void getForumDetail(const Forum& forum, const string& creatorName)
 {
     cout << "Forum Id: " << forum.getId() << endl;
-    cout << "CreateBy: " << user.getName() << endl;
+    cout << "CreateBy: " << creatorName << endl;
     cout << "CreateAt: " << forum.getCreatedAt() << endl;
     cout << "Content: " << forum.getContent() << endl;
     cout << string(70, '-') << endl;
 }
 
-void printAllForums(const ForumService& forumService, const User& user)
+void printAllForums(const ForumService& forumService, const AuthService& auth)
 {
     vector<Forum> forums = forumService.getAllForums();
     if (forums.empty())
@@ -183,17 +183,25 @@ void printAllForums(const ForumService& forumService, const User& user)
     {
         cout << "All Forums:" << endl;
         cout << string(70, '-') << endl;
+
+        // need to refetch user every time require update on All created forum display
+        vector<User> users = auth.getAllUsers();
+        map<string, string> userIdByNameDict;
+        for (User user : users)
+            userIdByNameDict[user.getId()] = user.getName();
+
         for (const Forum& forum : forums)
-            getForumDetail(forum, user);
+            getForumDetail(forum, userIdByNameDict.at(forum.getCreatorrId()));
     }
 }
 
-void getForumPage(const User& user)
+void getForumPage(const User& user, const AuthService& auth)
 {
     cout << endl << string(32, '-') << " Forum Dashboard " << string(32, '-') << endl;
 
     ForumService forumService;
-    printAllForums(forumService, user);
+
+    printAllForums(forumService, auth);
 
     int choice = -1;
     do
@@ -220,7 +228,7 @@ void getForumPage(const User& user)
             getline(cin, newContent);
             forumService.createForum(user.getId(), newContent);
             cout << endl << "Your Forum Successfully Created..." << endl;
-            printAllForums(forumService, user);
+            printAllForums(forumService, auth);
             choice = -1; 
         }
         else if (choice == 2)
@@ -232,7 +240,7 @@ void getForumPage(const User& user)
             {
                 cout << endl << "Your Forums:" << endl;
                 for (Forum forum : forums)
-                    getForumDetail(forum, user);
+                    getForumDetail(forum, user.getName());
 
                 int targetForumId = -1;
                 string newContent;
@@ -253,7 +261,7 @@ void getForumPage(const User& user)
                 cout << endl << "Here is your updated forum detail:" << endl;
                 cout << string(70, '-') << endl;
                 Forum updatedForum = forumService.getForumById(targetForumId);
-                getForumDetail(updatedForum, user);
+                getForumDetail(updatedForum, user.getName());
             }
             choice = -1;
         }
@@ -430,7 +438,7 @@ void showStudentMenu(
             break;
 
         case 5:
-            getForumPage(student);
+            getForumPage(student, auth);
             break;
 
         case 6: // Feedback
@@ -539,7 +547,7 @@ void showTutorMenu(
             break;
 
         case 5:
-            getForumPage(tutor);
+            getForumPage(tutor, auth);
             break;
 
         case 6:
