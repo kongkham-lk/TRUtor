@@ -820,8 +820,9 @@ void showTutorMenu(
                         cout << "Capacity : "; cin >> cap;
                         cout << "Day : "; 
                         cout << "\t1. Monday\n\t2. Tuesday\n\t3. Wednesday\n\t4. Thursday\n\t5. Friday\n\t6. Saturday\n\t7. Sunday\n";
-                        cin >> dayOption;
                         cout << "Please choose a day (1-7) : ";
+                        cin >> dayOption;
+                        cout << "\n";
                         switch (dayOption) {
                             case 1: day = "MON"; break;
                             case 2: day = "TUE"; break;
