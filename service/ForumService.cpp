@@ -1,7 +1,9 @@
 #include "ForumService.h"
 #include <iostream>
 #include <string>
+#include <ranges>
 #include <fstream>
+#include <vector>
 #include <sstream>
 #include <algorithm>
 #include <filesystem>
@@ -14,7 +16,7 @@ ForumService::ForumService()
 
 }
 
-void ForumService::saveForums(const vector<Forum>& forums) const {
+void ForumService::saveForums(const std::vector<Forum>& forums) const {
     // Check if the directory already exists
     if (!exists(dirPath) || !is_directory(dirPath)) {
         // Attempt to create the directory
@@ -29,7 +31,7 @@ void ForumService::saveForums(const vector<Forum>& forums) const {
     ofstream file(filePath);
     for (const Forum& newForum : forums) {
         string content = newForum.getContent();
-        ranges::replace(content, ' ', '_');
+        std::ranges::replace(content, ' ', '_');
 
         file << newForum.getId() << " "
             << newForum.getUserId() << " "
@@ -43,7 +45,7 @@ void ForumService::createForum(const string& creatorId, const string& content) c
 {
     // cout << "Start creating new forum... " << endl;
     // cout << "Retrieving all Forum..." << endl;
-    vector<Forum> forums = getAllForums();
+    std::vector<Forum> forums = getAllForums();
 
     // cout << "Get lastId..." << endl;
     int lastId = forums.empty() ? 0 : forums[forums.size()-1].getId();
@@ -58,7 +60,7 @@ void ForumService::createForum(const string& creatorId, const string& content) c
 
 void ForumService::editForum(const string& requestUserId, int forumId, const string& newContent) const
 {
-    if (vector<Forum> forums = getAllForumsByUserId(requestUserId); !forums.empty())
+    if (std::vector<Forum> forums = getAllForumsByUserId(requestUserId); !forums.empty())
     {
         for (Forum& targetForum : forums)
         {
@@ -74,7 +76,7 @@ void ForumService::editForum(const string& requestUserId, int forumId, const str
 
 void ForumService::deleteForums(const string& requestUserId, int forumId) const
 {
-    if (vector<Forum> forums = getAllForumsByUserId(requestUserId); !forums.empty())
+    if (std::vector<Forum> forums = getAllForumsByUserId(requestUserId); !forums.empty())
     {
         for (const auto targetForum = forums.begin(); targetForum != forums.end();)
         {
@@ -90,7 +92,7 @@ void ForumService::deleteForums(const string& requestUserId, int forumId) const
 
 vector<Forum> ForumService::getAllForums() const
 {
-    vector<Forum> forums;
+    std::vector<Forum> forums;
 
     ifstream file(filePath);
     if (!file.is_open())
@@ -108,7 +110,7 @@ vector<Forum> ForumService::getAllForums() const
         string content;
 
         if (stream >> forumId >> userId >> timestamp >> content) {
-            ranges::replace(content, '_', ' ');
+            std::ranges::replace(content, '_', ' ');
             Forum newForum(forumId, userId, content, timestamp);
             forums.push_back(newForum);
         }
@@ -120,19 +122,31 @@ vector<Forum> ForumService::getAllForums() const
 
 Forum ForumService::getForumById(const int& forumId) const
 {
-    if (vector<Forum> forums = getAllForums(); !forums.empty())
-        for (const Forum& forum : forums)
-            if (forum.getId() == forumId)
-                return forum;
-    else
-        return Forum();
+    // if (vector<Forum> forums = getAllForums(); !forums.empty())
+    //     for (const Forum& forum : forums)
+    //         if (forum.getId() == forumId)
+    //             return forum;
+    // else
+    //     return Forum();
+
+    std::vector<Forum> forums = getAllForums();
+
+    for (const Forum& forum : forums) {
+        if (forum.getId() == forumId) {
+            return forum;
+        }
+    }
+
+    // If not found, return a default Forum
+    return Forum();
 }
+
 
 vector<Forum> ForumService::getAllForumsByUserId(const string& userId) const
 {
-    if (vector<Forum> forums = getAllForums(); !forums.empty())
+    if (std::vector<Forum> forums = getAllForums(); !forums.empty())
     {
-        vector<Forum> result;
+        std::vector<Forum> result;
         for (const auto& forum : forums)
             if (forum.getUserId() == userId)
                 result.push_back(forum);
@@ -142,11 +156,11 @@ vector<Forum> ForumService::getAllForumsByUserId(const string& userId) const
         return forums;
 }
 
-vector<Forum> ForumService::getAllForumsByTime(time_t timeStamp) const
+std::vector<Forum> ForumService::getAllForumsByTime(time_t timeStamp) const
 {
-    if (vector<Forum> forums = getAllForums(); !forums.empty())
+    if (std::vector<Forum> forums = getAllForums(); !forums.empty())
     {
-        vector<Forum> result;
+        std::vector<Forum> result;
         for (const auto& forum : forums)
             if (forum.getCreatedAt() == timeStamp)
                 result.push_back(forum);

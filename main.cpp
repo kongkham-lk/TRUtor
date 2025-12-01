@@ -51,7 +51,7 @@ void viewConversation(const string& currentUserId, const string& partnerId, Auth
 void sendMessageToUser(const string& currentUserId, AuthService& auth, MessageService& msgService) {
     vector<User> allUsers = auth.getAllUsers();
     vector<User> recipients;
-    cout << "\n------------------ Select Recipient -----------------\n";
+    cout << "\n----------------------- Select Recipient ------------------------\n";
     int index = 1;
     for (const auto& user : allUsers) {
         if (user.getId() != currentUserId) {
@@ -82,6 +82,7 @@ void sendMessageToUser(const string& currentUserId, AuthService& auth, MessageSe
 
 //Function to view conversation and handle continuous reply
 void viewConversation(const string& currentUserId, const string& partnerId, AuthService& auth, MessageService& msgService) {
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
     while (true) {
         list<Message> conversation = msgService.getMessagesBetween(currentUserId, partnerId);
         vector<Message> sortedConversation(conversation.begin(), conversation.end());
@@ -110,7 +111,7 @@ void viewConversation(const string& currentUserId, const string& partnerId, Auth
         cout << "----------------------------------------------------------------\n";
         string replyContent;
         cout << "\nSend a message (Type !back to exit): \n";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        
 
         getline(cin, replyContent);
 
@@ -198,11 +199,12 @@ void getForumPage(const User& user)
     int choice = -1;
     do
     {
-        cout << endl << "Choose an option to proceed:" << endl;
+        cout << " \n";
         cout << "1. Create a new Forum" << endl;
         cout << "2. Manage your forums" << endl;
         cout << "3. Back to main page" << endl;
-        cout << "Please Enter: ";
+        cout << "--------------------------------------------------------\n";
+        cout << "Please choose an option (1-3) : ";
         if (!(cin >> choice)) {
             cout << endl << "Invalid Option, Please try again!" << endl;
             cin.clear();
@@ -268,12 +270,36 @@ void getForumPage(const User& user)
     cout << endl << "Exit Forum Page..." << endl;
 }
 
+
+bool isValidTimeFormat(const string& time) {
+    // Must be exactly 5 characters: HH:MM
+    if (time.size() != 5) return false;
+
+    // Check colon
+    if (time[2] != ':') return false;
+
+    // Check digits
+    if (!isdigit(time[0]) || !isdigit(time[1]) ||
+        !isdigit(time[3]) || !isdigit(time[4])) return false;
+    // Convert
+    int hour = stoi(time.substr(0, 2));
+    int min  = stoi(time.substr(3, 2));
+
+    // Valid ranges
+    if (hour < 0 || hour > 23) return false;
+    if (min < 0 || min > 59) return false;
+
+    return true;
+}
+
+
 void showStudentMenu(
     const Student& student,
     AuthService& auth,
     MessageService& msgService,
  //   const vector<User*>& users,
-    FeedbackService& feedbackService
+    FeedbackService& feedbackService,
+    CourseService& courseService  // used for the course management
 );
 
 void showTutorMenu(
@@ -281,11 +307,12 @@ void showTutorMenu(
     AuthService& auth,
     MessageService& msgService,
  //   const vector<User*>& users,
-    FeedbackService& feedbackService
+    FeedbackService& feedbackService,
+    CourseService& courseService  // used for the course management
 );
 
 int main() {
-    cout << "\n..........Application Starting...........\\n" << endl;
+    cout << "\n.....................Application Starting.......................\\n" << endl;
 
     // Instantiate all services
     AuthService auth;
@@ -293,21 +320,16 @@ int main() {
     MessageService msgService;
     FeedbackService feedbackService("feedback.txt");
    
-    Course c1("1", "CMPT 1250", "Intro to Programming");
-    courseService.createCourse(c1);
-    courseService.updateCourse(c1);
-    courseService.getCourse("1");
-    courseService.getAllCourses();
 
     while (true) {
         int choice;
 
         if (auth.isLoggedIn()) {
             if (auth.currentRole() == 0) {
-                showStudentMenu(auth.currentStudent(), auth, msgService, feedbackService);
+                showStudentMenu(auth.currentStudent(), auth, msgService, feedbackService, courseService);   //note
             }
             else if (auth.currentRole() == 1) {
-                showTutorMenu(auth.currentTutor(), auth, msgService, feedbackService);
+                showTutorMenu(auth.currentTutor(), auth, msgService, feedbackService, courseService);   //note
             }
         }
 
@@ -319,7 +341,8 @@ int main() {
         cout << "2. Signup Student\n";
         cout << "3. Signup Tutor\n";
         cout << "4. Exit\n";
-        cout << "Choose an option (1-4): ";
+        cout << "--------------------------------------------------------\n";
+        cout << "Please choose an option (1-4) : ";
 
         if (!(cin >> choice)) {
             cout << "Invalid input. Please enter a number." << endl;
@@ -332,26 +355,26 @@ int main() {
 
         switch (choice) {
         case 1:
-            cout << "Enter email: ";
+            cout << "Enter email : ";
             cin >> email;
-            cout << "Enter password: ";
+            cout << "Enter password : ";
             cin >> password;
             if (auth.login(email, password)) {
                 cout << "Login successful." << endl;
             }
             else {
-                cout << "Login failed. Check email and password." << endl;
+                cout << "Login failed. Check email or password." << endl;
             }
             break;
 
         case 2:
-            cout << "Enter name: ";
+            cout << "Enter name : ";
             cin >> name;
-            cout << "Enter email: ";
+            cout << "Enter email : ";
             cin >> email;
-            cout << "Enter password: ";
+            cout << "Enter password : ";
             cin >> password;
-            cout << "Enter major: ";
+            cout << "Enter major : ";
             cin >> major;
             if (auth.signUpStudent(email, password, name, major)) {
                 cout << "Student account created successfully! You are now logged in." << endl;
@@ -359,13 +382,16 @@ int main() {
             break;
 
         case 3:
-            cout << "Enter name: ";
-            cin >> name;
-            cout << "Enter email: ";
+            cout << "Enter name : "; cin.ignore(); 
+            getline(cin, name);
+    
+            cout << "Enter email : ";
             cin >> email;
-            cout << "Enter password: ";
+            cout << "Enter password : ";
             cin >> password;
+
             if (auth.signUpTutor(email, password, name)) {
+                cout << " ";
                 cout << "Tutor account created successfully! You are now logged in." << endl;
             }
             break;
@@ -385,13 +411,15 @@ void showStudentMenu(
     const Student& student,
     AuthService& auth,
     MessageService& msgService,
-    FeedbackService& feedbackService
+    FeedbackService& feedbackService,
+    CourseService& courseService  // used for the course management
 ) {
     while (true) {
         int choice;
 
         cout << "\n--------------------- Student Menu --------------------\n";
         cout << "Welcome, " << student.getName() << "!\n";
+        cout << "-----------------------------------------------\n";
         cout << "1. View Profile\n";
         cout << "2. View Messages\n";
         cout << "3. Send New Message\n";
@@ -399,7 +427,8 @@ void showStudentMenu(
         cout << "5. Forum\n";
         cout << "6. Leave Feedback\n";
         cout << "7. Logout\n";
-        cout << "Choose an option (1-7): ";
+        cout << "-----------------------------------------------\n";
+        cout << "Please choose an option (1-7) : ";
 
         if (!(cin >> choice)) {
             cout << "Invalid input. Please enter a number." << endl;
@@ -411,10 +440,10 @@ void showStudentMenu(
         switch (choice) {
         case 1:
             cout << "\n------------------- Student Profile -------------------\n";
-            cout << "ID: " << student.getId() << "\n";
-            cout << "Name: " << student.getName() << "\n";
-            cout << "Email: " << student.getEmail() << "\n";
-            cout << "Major: " << student.getMajor() << "\n";
+            cout << "ID : " << student.getId() << "\n";
+            cout << "Name : " << student.getName() << "\n";
+            cout << "Email : " << student.getEmail() << "\n";
+            cout << "Major : " << student.getMajor() << "\n";
             break;
 
         case 2:
@@ -426,9 +455,82 @@ void showStudentMenu(
             break;
 
         case 4:
-            cout << "\n(No session viewing implemented yet)\n";
-            break;
+        {
+            while (true) {
+            cout << "\n------------------------ Tutoring Sessions ---------------------\n";
 
+            int option;
+            cout << "1. Browse All Courses\n";
+            cout << "2. Enroll in a Course\n";
+            cout << "3. Withdraw from a Course\n";
+            cout << "4. Leave Waitlist\n";
+            cout << "5. View My Enrolled Courses\n";
+            cout << "6. View My Waitlisted Courses\n";
+            cout << "7. Back to Main Menu\n";
+            cout << "---------------------------------------------------------------\n";
+            cout << "Please choose an option (1-7) : ";
+            cin >> option;
+
+            string cid;
+
+            switch (option) {
+                case 1:
+                    courseService.listAllCourses();
+                    break;
+
+                case 2:
+                    cout << "Enter Course ID : ";
+                    cin >> cid;
+                    if (courseService.enrollStudent(student.getId(), cid))
+                        cout << "\n Successfully Enrolled!\n";
+                    else {
+                        cout << "Course " << cid << " is full. \n";
+                        cout << "Do you want to join the waitlist? (y/n): ";
+                        char waitlistChoice;
+                        cin >> waitlistChoice;
+                        if (waitlistChoice == 'y' || waitlistChoice == 'Y') {
+                            courseService.joinWaitlist(student.getId(), cid);
+                            cout << "Added to waitlist.\n";
+                        }
+                        else {
+                            cout << "Not added to waitlist.\n";
+                        }
+                    }
+                    break;
+
+                case 3:
+                    cout << "Enter Course ID: ";
+                    cin >> cid;
+                    if (courseService.removeStudent(student.getId(), cid))
+                        cout << "\nWithdrawn from course " << cid << ".\n";
+                    else
+                        cout << "Not enrolled.\n";
+                    break;
+
+                case 4:
+                    cout << "Enter Course ID: ";
+                    cin >> cid;
+                    courseService.leaveWaitlist(student.getId(), cid);
+                    cout << "Removed from waitlist.\n";
+                    break;
+
+                case 5:
+                    courseService.listStudentCourses(student.getId());
+                    break;
+
+                case 6:
+                    courseService.listStudentWaitlisted(student.getId());
+                    break;
+                case 7:
+                    return;
+                default:
+                    cout << "Invalid option.\n";
+            }
+
+            }
+
+            break;
+        }
         case 5:
             getForumPage(student);
             break;
@@ -448,7 +550,7 @@ void showStudentMenu(
                 break;
             }
 
-            cout << "Select a tutor to give feedback:\n";
+            cout << "Select a tutor to give feedback :\n";
             for (size_t i = 0; i < tutors.size(); ++i)
                 cout << i + 1 << ". " << tutors[i].getName() << endl;
 
@@ -467,7 +569,7 @@ void showStudentMenu(
             cin.ignore(numeric_limits<streamsize>::max(), '\n'); // clear leftover newline
 
             string feedbackContent;
-            cout << "Enter your feedback: ";
+            cout << "Please enter your feedback : ";
             getline(cin, feedbackContent);
 
             feedbackService.addFeedback(
@@ -495,21 +597,24 @@ void showTutorMenu(
     const Tutor& tutor,
     AuthService& auth,
     MessageService& msgService,
-    FeedbackService& feedbackService
+    FeedbackService& feedbackService,
+    CourseService& courseService  // used for the course management
 ) {
     while (true) {
         int choice;
 
         cout << "\n---------------------- Tutor Menu ---------------------\n";
         cout << "Welcome, " << tutor.getName() << "!\n";
+        cout << "--------------------------------------------------------\n";
         cout << "1. View Profile\n";
         cout << "2. View Messages\n";
         cout << "3. Send New Message\n";
-        cout << "4. Tutoring Sessions\n";
+        cout << "4. Manage Tutoring Sessions\n";
         cout << "5. Forum\n";
         cout << "6. View Feedback\n";
         cout << "7. Logout\n";
-        cout << "Choose an option (1-7): ";
+        cout << "--------------------------------------------------------\n";
+        cout << "Please choose an option (1-7): ";
 
         if (!(cin >> choice)) {
             cout << "Invalid input. Please enter a number." << endl;
@@ -521,9 +626,9 @@ void showTutorMenu(
         switch (choice) {
         case 1:
             cout << "\n------------------- Tutor Profile -------------------\n";
-            cout << "ID: " << tutor.getId() << "\n";
-            cout << "Name: " << tutor.getName() << "\n";
-            cout << "Email: " << tutor.getEmail() << "\n";
+            cout << "ID : " << tutor.getId() << "\n";
+            cout << "Name : " << tutor.getName() << "\n";
+            cout << "Email : " << tutor.getEmail() << "\n";
             break;
 
         case 2:
@@ -535,9 +640,220 @@ void showTutorMenu(
             break;
 
         case 4:
-            cout << "\n(No session management implemented yet)\n";
-            break;
+        {
+            while (true) {
+                    cout << "\n---------------------- Tutoring Sessions Management -----------------------\n";
 
+            int option;
+            cout << "1. Create a Course\n";
+            cout << "2. Edit an existing Course\n";
+            cout << "3. Delete a Course\n";
+            cout << "4. View My Courses\n";
+            cout << "5. Back to Main Menu\n";
+            cout << "-------------------------------------------------------------------------\n";
+            cout << "Please choose an option (1-5) : ";
+            cin >> option;
+
+            string cid;
+
+            switch (option) {
+                case 1: {
+                    bool continueAdding;
+                    
+                    do
+                    {
+                        continueAdding = false;
+                        string code, title, desc, day, start, end;
+                        int cap;
+                        int dayOption;
+                        cout << "\nPlease enter the required course details.\n";
+                        cout << "\n";
+                        cout << "Code : "; cin >> code;
+                        cout << "Title : "; cin.ignore(); getline(cin, title);
+                        cout << "Description : "; getline(cin, desc);
+                        cout << "Capacity : "; cin >> cap;
+                        cout << "Day : "; 
+                        cout << "\t1. Monday\n\t2. Tuesday\n\t3. Wednesday\n\t4. Thursday\n\t5. Friday\n\t6. Saturday\n\t7. Sunday\n";
+                        cin >> dayOption;
+                        cout << "Please choose a day (1-7) : ";
+                        switch (dayOption) {
+                            case 1: day = "MON"; break;
+                            case 2: day = "TUE"; break;
+                            case 3: day = "WED"; break;
+                            case 4: day = "THU"; break;
+                            case 5: day = "FRI"; break;
+                            case 6: day = "SAT"; break;
+                            case 7: day = "SUN"; break;
+                            default: 
+                                cout << "Invalid day selection!\n";
+                                continueAdding = true;
+                        }
+                        cout << "Start Time (HH:MM) : "; cin >> start;
+                        cout << "End Time (HH:MM) : "; cin >> end;
+                        cout << "\n";
+
+                        if (cap <= 0) {
+                            cout << "Invalid capacity.\n";
+                            continueAdding = true;
+                        }
+                        
+                        if (day == "Invalid") {
+                            cout << "Invalid day selection.\n";
+                            continueAdding = true;
+                        }
+                        if (!isValidTimeFormat(start) || !isValidTimeFormat(end)) {
+                            cout << "Invalid time format. Please use 24 hour HH:MM format (e.g., 14:30).\n";
+                            continueAdding = true;
+                        }
+                        else {
+                            // Only compare if format valid
+                            if (start >= end) {
+                                cout << "Start time must be before end time.\n";
+                                continueAdding = true;
+                            }
+                        }
+
+                        if (!continueAdding) {
+                            Course c("TEMP", code, title, desc, cap,
+                            tutor.getId(), day, start, end);
+                            courseService.createCourse(c);
+                            cout << "\nCourse Created Successfully...\n";
+                            cout << "-------------------------------------------------------\n";
+                        }
+                        else {
+                            cout << "Course Creation Aborted.\n";
+                            cout << "-------------------------------------------------------\n";
+                        }
+                        
+                    } while (continueAdding);
+                    
+                    break;
+                }
+
+                case 2:
+                {
+                    string cid;
+                    cout << "Enter Course ID to edit : ";
+                    cin >> cid;
+
+                    Course course = courseService.getCourse(cid);
+
+                    if (course.getId() == "") {
+                        cout << "Course not found.\n";
+                        return;
+                    }
+
+                    int opt;
+                    do {
+                        cout << "\n------------------- Edit Course (" << course.getId() << ") -------------------\n";
+                        cout << "1. Edit Title\n";
+                        cout << "2. Edit Description\n";
+                        cout << "3. Edit Capacity\n";
+                        cout << "4. Edit Day\n";
+                        cout << "5. Edit Start Time\n";
+                        cout << "6. Edit End Time\n";
+                        cout << "7. Save & Exit\n";
+                        cout << "Choose: ";
+                        cin >> opt;
+
+                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                        if (opt == 1) {
+                            string t;
+                            cout << "New Title: ";
+                            getline(cin, t);
+                            course.setTitle(t);
+                        }
+                        else if (opt == 2) {
+                            string d;
+                            cout << "New Description: ";
+                            getline(cin, d);
+                            course.setDescription(d);
+                        }
+                        else if (opt == 3) {
+                            int cap;
+                            cout << "New Capacity: ";
+                            cin >> cap;
+
+                            if (cap <= 0) {
+                                cout << " Invalid capacity.\n";
+                            } else {
+                                course.setCapacity(cap);
+                            }
+                        }
+                        else if (opt == 4) {
+                            int dayOpt;
+                            cout << "Choose New Day (1-7)\n"
+                                    "1 MON\n2 TUE\n3 WED\n4 THU\n5 FRI\n6 SAT\n7 SUN\n";
+                            cin >> dayOpt;
+
+                            switch (dayOpt) {
+                                case 1: course.setDay("MON"); break;
+                                case 2: course.setDay("TUE"); break;
+                                case 3: course.setDay("WED"); break;
+                                case 4: course.setDay("THU"); break;
+                                case 5: course.setDay("FRI"); break;
+                                case 6: course.setDay("SAT"); break;
+                                case 7: course.setDay("SUN"); break;
+                                default: cout << "Invalid option.\n"; break;
+                            }
+                        }
+                        else if (opt == 5) {
+                            string s;
+                            cout << "New Start Time (HH:MM) : ";
+                            cin >> s;
+
+                            if (!isValidTimeFormat(s)) {
+                                cout << " Invalid time format.\n";
+                            } else if (s >= course.getEndTime()) {
+                                cout << " Start time must be before end time.\n";
+                            } else {
+                                course.setStartTime(s);
+                            }
+                        }
+                        else if (opt == 6) {
+                            string e;
+                            cout << "New End Time (HH:MM) : ";
+                            cin >> e;
+
+                            if (!isValidTimeFormat(e)) {
+                                cout << " Invalid time format.\n";
+                            } else if (e <= course.getStartTime()) {
+                                cout << "End time must be after start time.\n";
+                            } else {
+                                course.setEndTime(e);
+                            }
+                        }
+
+                    } while (opt != 7);
+
+                    courseService.updateCourse(course);
+                    cout << "\n Course updated successfully.\n";
+                    cout << "-------------------------------------------------------\n";
+                    break;
+                }
+
+                case 3:
+                    cout << "Enter Course ID to delete : ";
+                    cin >> cid;
+                    if (courseService.deleteCourse(tutor.getId(), cid))
+                        cout << "Course deleted Successfully.\n";
+                    break;
+
+                case 4:
+                    courseService.listTutorCourses(tutor.getId());
+                    break;
+
+                case 5:
+                    return;
+
+                default:
+                    cout << "Invalid option.\n";
+            }
+        }
+
+            break;
+        }
         case 5:
             getForumPage(tutor);
             break;

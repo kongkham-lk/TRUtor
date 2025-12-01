@@ -3,6 +3,8 @@
 
 #include <string>
 #include <list>
+#include <vector>
+#include <fstream>
 #include "../model/Forum.h"
 
 using namespace std;
