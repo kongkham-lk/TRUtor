@@ -532,12 +532,14 @@ void showStudentMenu(
                     courseService.listStudentWaitlisted(student.getId());
                     break;
                 case 7:
+                    goto exit_to_student_menu;
                     break;
                 default:
                     cout << "Invalid option.\n";
             }
 
             }
+            exit_to_student_menu:
 
             break;
         }
@@ -855,13 +857,14 @@ void showTutorMenu(
                     break;
 
                 case 5:
+                    goto exit_tutoring_menu;
                     break;
 
                 default:
                     cout << "Invalid option.\n";
             }
         }
-
+        exit_tutoring_menu:
             break;
         }
         case 5:
