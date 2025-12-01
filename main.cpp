@@ -7,6 +7,7 @@
 #include <limits>
 #include <ctime>
 #include <set>
+#include <map>
 
 // Include necessary model/service headers
 #include "model/User.h"
@@ -165,104 +166,241 @@ void viewAllMessages(const string& currentUserId, AuthService& auth, MessageServ
     viewConversation(currentUserId, selectedPartnerId, auth, msgService);
 }
 
-void getForumDetail(const Forum& forum, const User& user)
+void logForumForDebug(const Forum& forum)
 {
-    cout << "Forum Id: " << forum.getId() << endl;
-    cout << "CreateBy: " << user.getName() << endl;
-    cout << "CreateAt: " << forum.getCreatedAt() << endl;
-    cout << "Content: " << forum.getContent() << endl;
-    cout << string(70, '-') << endl;
+    string replyForumsIdsStr = "_";
+    for (int i = 0; i < forum.getReplyForumsId().size(); i++)
+        replyForumsIdsStr += to_string(forum.getReplyForumsId()[i]) + "_";
+    cout << forum.getId() << ", " << forum.getContent() << ", " << forum.getParentForumId() << " " << replyForumsIdsStr << endl;
 }
 
-void printAllForums(const ForumService& forumService, const User& user)
+void logAllForumForDebug(const vector<Forum>& forums)
 {
-    vector<Forum> forums = forumService.getAllForums();
-    if (forums.empty())
-        cout << "No Forum Found!" << endl;
+    cout << endl << "Start Debugging...." << endl;
+    for (const Forum& forum : forums)
+        logForumForDebug(forum);
+    cout << endl << "End Debugging...." << endl;
+}
+
+void getForumDetail(const Forum& forum, const string& creatorName, int indentSize = 0)
+{
+    cout << string(indentSize, ' ') << "Forum Id: " << forum.getId() << endl;
+    cout << string(indentSize, ' ') << "CreateBy: " << creatorName << endl;
+    cout << string(indentSize, ' ') << "CreateAt: " << forum.getCreatedAt() << endl;
+    cout << string(indentSize, ' ') << "Content: " << forum.getContent() << endl;
+    cout << string(indentSize, ' ') << string(70-indentSize, '-') << endl;
+}
+
+string fetchForumCreatorName(Forum mainForum, const map<string, string>& userIdByNameDict)
+{
+    string creatorName = "(Unknown User)";
+    auto targetUser = userIdByNameDict.find(mainForum.getCreatorId());
+    if (targetUser != userIdByNameDict.end())
+        creatorName = targetUser->second;
+    else
+        cout << ">>> Fail to fetch creator of the post From DB!" << endl;
+    return creatorName;
+}
+
+void getForumResponseDetail(const ForumResponse& forum, const map<string, string>& userIdByNameDict, int indent = 0)
+{
+    Forum mainForum = forum.getRoot();
+
+    if (mainForum.getId() == -1) return;
+
+    // cout << "Lookup UserId (mainForum): " << mainForum.getId() << endl;
+    string creatorName = fetchForumCreatorName(mainForum, userIdByNameDict);
+    // cout << "Found: " << creatorName << endl;
+    getForumDetail(mainForum, creatorName, indent);
+
+    // cout << endl << "Start Debugging...." << endl;
+    // logForumForDebug(mainForum);
+    // cout << endl << "End Debugging...." << endl;
+
+    // print all its sub reply post
+    if (vector<ForumResponse> replyForums = forum.getReplies(); !replyForums.empty())
+    {
+        cout << string(indent, ' ') << "Reply Post " << string(60-indent, '-') << endl;
+        for (const ForumResponse& child : forum.getReplies())
+            getForumResponseDetail(child, userIdByNameDict, indent + 4);
+    }
     else
     {
-        cout << "All Forums:" << endl;
+        cout << string(indent, ' ') << "No Reply Post!" << endl;
         cout << string(70, '-') << endl;
-        for (const Forum& forum : forums)
-            getForumDetail(forum, user);
     }
 }
 
-void getForumPage(const User& user)
+template <typename T>
+bool checkIfForumsEmpty(const vector<T>& forums)
+{
+    if (forums.empty())
+    {
+        cout << "No Forum Found!" << endl;
+        return true;
+    }
+    return false;
+}
+
+map<string, string> getAllUsers(const AuthService& auth)
+{
+    vector<User> users = auth.getAllUsers();
+    map<string, string> userIdByNameDict;
+    for (User user : users)
+    {
+        userIdByNameDict[user.getId()] = user.getName();
+    }
+    return userIdByNameDict;
+}
+
+bool printAllForumsResponse(const vector<ForumResponse>& forums, const AuthService& auth)
+{
+    if (checkIfForumsEmpty(forums)) return false;
+
+    // need to refetch user every time require update on All created forum display
+    map<string, string> userIdByNameDict = getAllUsers(auth);
+
+    cout << endl << "All Forums:" << endl;
+    cout << string(70, '-') << endl;
+
+    for (const ForumResponse& forum : forums)
+    {
+        getForumResponseDetail(forum, userIdByNameDict);
+    }
+    return true;
+}
+
+bool printAllForums(const vector<Forum>& forums, const AuthService& auth)
+{
+    if (checkIfForumsEmpty(forums)) return false;
+    map<string, string> userIdByNameDict = getAllUsers(auth); // need to refetch user every time require update on All created forum display
+
+    cout << endl << "All Forums:" << endl;
+    cout << string(70, '-') << endl;
+    for (const Forum& forum : forums)
+    {
+        if (forum.getId() == -1) continue;
+
+        // cout << "Lookup UserId (forum): " << forum.getCreatorId() << endl;
+        string creatorName = fetchForumCreatorName(forum, userIdByNameDict);
+        // cout << "found: " << creatorName << endl;
+        getForumDetail(forum, creatorName);
+    }
+    return true;
+}
+
+int getForumIdFromUser()
+{
+    int targetForumId = -1;
+    cout << endl << "Enter the ID of the forum: ";
+    if (!(cin >> targetForumId)) {
+        cout << "Invalid ID. Returning to forum menu." << endl;
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        return -1;
+    }
+    return targetForumId;
+}
+
+string getForumContentFromUser()
+{
+    string newContent;
+    cout << "Please enter new content: ";
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    getline(cin, newContent);
+    return newContent;
+}
+
+void showForumUpdateResult(const User& user, const Forum& updatedForum)
+{
+    cout << endl << "Here is your updated forum detail:" << endl;
+    cout << string(70, '-') << endl;
+    getForumDetail(updatedForum, user.getName());
+}
+
+void getForumPage(const User& user, const AuthService& auth)
 {
     cout << endl << string(32, '-') << " Forum Dashboard " << string(32, '-') << endl;
 
     ForumService forumService;
-    printAllForums(forumService, user);
+    vector<ForumResponse> forums = forumService.getAllForums();
+    printAllForumsResponse(forums, auth);
 
     int choice = -1;
     do
     {
         cout << endl << "Choose an option to proceed:" << endl;
-        cout << "1. Create a new Forum" << endl;
-        cout << "2. Manage your forums" << endl;
-        cout << "3. Back to main page" << endl;
+        cout << "1. Create a new forum" << endl;
+        cout << "2. Reply to a specific forum" << endl;
+        cout << "3. Manage your forums" << endl;
+        cout << "4. Back to main page" << endl;
         cout << "Please Enter: ";
+
         if (!(cin >> choice)) {
             cout << endl << "Invalid Option, Please try again!" << endl;
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             choice = -1;
-            continue;
         }
-
-
-        if (choice == 1)
+        else if (choice == 1) // Create Forum
         {
-            string newContent;
-            cout << endl << "Please enter forum content:" << endl;
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            getline(cin, newContent);
-            forumService.createForum(user.getId(), newContent);
-            cout << endl << "Your Forum Successfully Created..." << endl;
-            printAllForums(forumService, user);
+            string newContent = getForumContentFromUser();
+            forumService.createForumAndSave(user.getId(), newContent);
+
+            cout << endl << "Forum Creation Successfully..." << endl;
+            printAllForumsResponse(forumService.getAllForums(), auth);
             choice = -1; 
         }
-        else if (choice == 2)
+        else if (choice == 2) // Reply Forum
         {
-            vector<Forum> forums = forumService.getAllForumsByUserId(user.getId());
-            if (forums.empty())
-                cout << endl << "No Forum Found!" << endl;
-            else
+            if (int targetForumId = getForumIdFromUser(); targetForumId != -1)
             {
-                cout << endl << "Your Forums:" << endl;
-                for (Forum forum : forums)
-                    getForumDetail(forum, user);
+                string newContent = getForumContentFromUser();
+                forumService.replyToForum(user.getId(), newContent, targetForumId);
 
-                int targetForumId = -1;
-                string newContent;
-                cout << endl << "Enter the ID of the forum to edit: ";
-                if (!(cin >> targetForumId)) {
-                    cout << "Invalid ID. Returning to forum menu." << endl;
-                    cin.clear();
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                    choice = -1;
-                    continue;
-                }
-
-                cout << "Please enter new content: " << endl;
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                getline(cin, newContent);
-                forumService.editForum(user.getId(), targetForumId, newContent);
-
-                cout << endl << "Here is your updated forum detail:" << endl;
-                cout << string(70, '-') << endl;
-                Forum updatedForum = forumService.getForumById(targetForumId);
-                getForumDetail(updatedForum, user);
+                printAllForumsResponse(forumService.getAllForums(), auth);
             }
             choice = -1;
         }
-        else if (choice == 3)
-            break;
-        else {
-            cout << endl << "Invalid Option, Please try again!" << endl;
+        else if (choice == 3) // Manage Forum
+        {
+            if (vector<Forum> forums = forumService.getAllForumsByUserId(user.getId()); printAllForums(forums, auth))
+            {
+                if (int targetForumId = getForumIdFromUser(); targetForumId != -1)
+                {
+                    int subChoice = -1;
+                    cout << endl << "Choose an option to proceed:" << endl;
+                    cout << "1. Update Forum Content" << endl;
+                    cout << "2. Delete Forum" << endl;
+                    cout << "3. Go Back" << endl;
+                    cout << "Please Enter: ";
+
+                    if (!(cin >> subChoice)) {
+                        cout << endl << "Invalid Option, Please try again!" << endl;
+                        cin.clear();
+                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    }
+                    else if (subChoice == 1) // Update Forum Content
+                    {
+                        string newContent = getForumContentFromUser();
+                        forumService.editForumContent(user.getId(), targetForumId, newContent);
+
+                        cout << endl << "Forum Content Update Successfully..." << endl;
+                        printAllForumsResponse(forumService.getAllForums(), auth);
+                    }
+                    else if (subChoice == 2) // Delete the form
+                    {
+                        forumService.deleteForums(user.getId(), targetForumId);
+
+                        cout << endl << "Forum Deletion Successfully..." << endl;
+                        printAllForumsResponse(forumService.getAllForums(), auth);
+                    }
+                }
+            }
             choice = -1;
         }
+        else if (choice == 4) // Back to Main Menu
+            break;
     } while (choice == -1);
 
     cout << endl << "Exit Forum Page..." << endl;
@@ -310,9 +448,6 @@ int main() {
                 showTutorMenu(auth.currentTutor(), auth, msgService, feedbackService);
             }
         }
-
-
-    
 
         cout << "\n---------------------- Main Menu ----------------------\n";
         cout << "1. Login\n";
@@ -430,7 +565,7 @@ void showStudentMenu(
             break;
 
         case 5:
-            getForumPage(student);
+            getForumPage(student, auth);
             break;
 
         case 6: // Feedback
@@ -539,7 +674,7 @@ void showTutorMenu(
             break;
 
         case 5:
-            getForumPage(tutor);
+            getForumPage(tutor, auth);
             break;
 
         case 6:

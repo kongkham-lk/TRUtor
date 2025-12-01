@@ -1,7 +1,12 @@
+# If fail to compile, Run command:
+#   cmake -S . -B cmake-build-debug
+#   cmake --build cmake-build-debug
+
 cmake_minimum_required(VERSION 4.0)
 project(TRUtor)
 
 set(CMAKE_CXX_STANDARD 20)
+
 
 # Auto-detect all .cpp and .h files recursively
 file(GLOB_RECURSE SOURCES
