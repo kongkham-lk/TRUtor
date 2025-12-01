@@ -166,32 +166,30 @@ void viewAllMessages(const string& currentUserId, AuthService& auth, MessageServ
     viewConversation(currentUserId, selectedPartnerId, auth, msgService);
 }
 
+void logForumForDebug(const Forum& forum)
+{
+    string replyForumsIdsStr = "_";
+    for (int i = 0; i < forum.getReplyForumsId().size(); i++)
+        replyForumsIdsStr += to_string(forum.getReplyForumsId()[i]) + "_";
+    cout << forum.getId() << ", " << forum.getContent() << ", " << forum.getParentForumId() << " " << replyForumsIdsStr << endl;
+}
+
+void logAllForumForDebug(const vector<Forum>& forums)
+{
+    cout << endl << "Start Debugging...." << endl;
+    for (const Forum& forum : forums)
+        logForumForDebug(forum);
+    cout << endl << "End Debugging...." << endl;
+}
+
 void getForumDetail(const Forum& forum, const string& creatorName, int indentSize = 0)
 {
-
     cout << string(indentSize, ' ') << "Forum Id: " << forum.getId() << endl;
     cout << string(indentSize, ' ') << "CreateBy: " << creatorName << endl;
     cout << string(indentSize, ' ') << "CreateAt: " << forum.getCreatedAt() << endl;
     cout << string(indentSize, ' ') << "Content: " << forum.getContent() << endl;
-    //
-    // cout << endl << "Start Debugging...." << endl;
-    // vector<int> replyForumsIds = forum.getReplyForumsId();
-    // string replyForumsIdsStr = "_";
-    // for (int i = 0; i < replyForumsIds.size(); i++)
-    //     replyForumsIdsStr += to_string(replyForumsIds[i]) + "_";
-    // cout << string(indentSize, ' ') << "replyIds: " << replyForumsIdsStr << endl;
-    // cout << endl << "End Debugging...." << endl;
-
     cout << string(indentSize, ' ') << string(70-indentSize, '-') << endl;
 }
-//
-// void printForumResponse(const ForumResponse& r, int indent = 0)
-// {
-//     printForum(r.getRoot(), indent);
-//
-//     for (const ForumResponse& child : r.getReplies())
-//         printForumResponse(child, indent + 4);
-// }
 
 string fetchForumCreatorName(Forum mainForum, const map<string, string>& userIdByNameDict)
 {
@@ -208,13 +206,16 @@ void getForumResponseDetail(const ForumResponse& forum, const map<string, string
 {
     Forum mainForum = forum.getRoot();
 
-    // // print original post
     if (mainForum.getId() == -1) return;
 
     // cout << "Lookup UserId (mainForum): " << mainForum.getId() << endl;
     string creatorName = fetchForumCreatorName(mainForum, userIdByNameDict);
     // cout << "Found: " << creatorName << endl;
     getForumDetail(mainForum, creatorName, indent);
+
+    // cout << endl << "Start Debugging...." << endl;
+    // logForumForDebug(mainForum);
+    // cout << endl << "End Debugging...." << endl;
 
     // print all its sub reply post
     if (vector<ForumResponse> replyForums = forum.getReplies(); !replyForums.empty())
@@ -310,12 +311,11 @@ string getForumContentFromUser()
     return newContent;
 }
 
-void showForumUpdateResult(const User& user, Forum updatedForum)
+void showForumUpdateResult(const User& user, const Forum& updatedForum)
 {
     cout << endl << "Here is your updated forum detail:" << endl;
     cout << string(70, '-') << endl;
     getForumDetail(updatedForum, user.getName());
-
 }
 
 void getForumPage(const User& user, const AuthService& auth)
@@ -448,9 +448,6 @@ int main() {
                 showTutorMenu(auth.currentTutor(), auth, msgService, feedbackService);
             }
         }
-
-
-    
 
         cout << "\n---------------------- Main Menu ----------------------\n";
         cout << "1. Login\n";

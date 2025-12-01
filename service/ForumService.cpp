@@ -9,6 +9,7 @@
 #include <map>
 
 #include "../model/ForumResponse.h"
+#include "../main.cpp"
 
 using namespace std;
 using namespace std::filesystem;
@@ -125,22 +126,6 @@ vector<Forum> ForumService::createForum(const string& creatorId, const string& c
     return forums;
 }
 
-void logForumForDebug(const Forum& forum)
-{
-    string replyForumsIdsStr = "_";
-    for (int i = 0; i < forum.getReplyForumsId().size(); i++)
-        replyForumsIdsStr += to_string(forum.getReplyForumsId()[i]) + "_";
-    cout << forum.getId() << ", " << forum.getContent() << ", " << forum.getParentForumId() << " " << replyForumsIdsStr << endl;
-}
-
-void logAllForumForDebug(const vector<Forum>& forums)
-{
-    cout << endl << "Start Debugging...." << endl;
-    for (const Forum& forum : forums)
-        logForumForDebug(forum);
-    cout << endl << "End Debugging...." << endl;
-}
-
 void ForumService::createForumAndSave(const string& creatorId, const string& content, int parentForumId)
 {
     vector<Forum> forums = createForum(creatorId, content, parentForumId);
@@ -186,8 +171,7 @@ bool ForumService::addForumReplyId(vector<Forum>& forums, const int& parentForum
             }
         }
     }
-
-    cout << "Fail to Update! " << endl;
+    // cout << "Fail to Update! " << endl;
     return false;
 }
 
