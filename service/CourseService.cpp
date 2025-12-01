@@ -105,7 +105,8 @@ Course CourseService::getCourse(const std::string& id) {
             return course;
         }
     }
-    throw runtime_error("Course not found for ID: " + id);
+    //throw runtime_error("Course not found for ID: " + id);
+    return Course(); // return empty course if not found
 }
 
 void CourseService::updateCourse(const Course& course) {
@@ -156,7 +157,9 @@ bool CourseService::deleteCourse(const string& tutorId, const string& courseId) 
 //returns all the courses
 vector<Course> CourseService::getAllCourses() {
     cout << "[CourseService] Fetching all courses from file.\n";
-    return loadCoursesFromFile();  //get all courses
+    vector<Course> courses = loadCoursesFromFile();
+    
+    return courses;  //get all courses
 }
 
 //get all courses of a particular tutor

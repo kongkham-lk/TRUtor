@@ -466,7 +466,7 @@ void showStudentMenu(
             cout << "4. Leave Waitlist\n";
             cout << "5. View My Enrolled Courses\n";
             cout << "6. View My Waitlisted Courses\n";
-            cout << "7. Back to Main Menu\n";
+            cout << "7. Back to Student Menu\n";
             cout << "---------------------------------------------------------------\n";
             cout << "Please choose an option (1-7) : ";
             cin >> option;
@@ -479,8 +479,16 @@ void showStudentMenu(
                     break;
 
                 case 2:
+                {
                     cout << "Enter Course ID : ";
                     cin >> cid;
+
+                    Course c = courseService.getCourse(cid);
+                    if (c.getId().empty()) {
+                        cout << "Course does not exist.\n";
+                        break;
+                    }
+
                     if (courseService.enrollStudent(student.getId(), cid))
                         cout << "\n Successfully Enrolled!\n";
                     else {
@@ -497,7 +505,7 @@ void showStudentMenu(
                         }
                     }
                     break;
-
+                }
                 case 3:
                     cout << "Enter Course ID: ";
                     cin >> cid;
@@ -510,8 +518,10 @@ void showStudentMenu(
                 case 4:
                     cout << "Enter Course ID: ";
                     cin >> cid;
-                    courseService.leaveWaitlist(student.getId(), cid);
-                    cout << "Removed from waitlist.\n";
+                    if (courseService.leaveWaitlist(student.getId(), cid))
+                        cout << "Removed from waitlist.\n";
+                    else
+                        cout << "Not in waitlist.\n";
                     break;
 
                 case 5:
@@ -522,7 +532,7 @@ void showStudentMenu(
                     courseService.listStudentWaitlisted(student.getId());
                     break;
                 case 7:
-                    return;
+                    break;
                 default:
                     cout << "Invalid option.\n";
             }
@@ -649,7 +659,7 @@ void showTutorMenu(
             cout << "2. Edit an existing Course\n";
             cout << "3. Delete a Course\n";
             cout << "4. View My Courses\n";
-            cout << "5. Back to Main Menu\n";
+            cout << "5. Back to Tutor Menu\n";
             cout << "-------------------------------------------------------------------------\n";
             cout << "Please choose an option (1-5) : ";
             cin >> option;
@@ -845,7 +855,7 @@ void showTutorMenu(
                     break;
 
                 case 5:
-                    return;
+                    break;
 
                 default:
                     cout << "Invalid option.\n";
