@@ -27,6 +27,7 @@ struct Message {
 class MessageService {
 public:
     MessageService(); 
+    ~MessageService();
 
     void createMessage(const string& senderId, const string& receiverId, string content, time_t timeStamp);
     list<Message> getMessagesBetween(const string& userId1, const string& userId2);

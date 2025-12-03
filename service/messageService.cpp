@@ -8,6 +8,8 @@
 #include <limits>
 #include <cmath> 
 
+MessageService::~MessageService() {}
+
 //Replace spaces with underscores for file storage
 string MessageService::escapeContent(const string& content) const {
     string escaped = content;
