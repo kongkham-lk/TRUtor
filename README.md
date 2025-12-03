@@ -92,14 +92,15 @@ This finds all `.cpp` files recursively and compiles them into a single executab
 | `Service Classes` | Business logic and service layer handling operations like user management, session booking, and messaging functionality |
 | `IUser Interface` | Base class with role-based hierarchy, storing user credentials (email, password), profile information (name, ID), and creation timestamps |
 
-| Feature | Description |
-|---------|-------------|
-| `User Class` | Organized data models representing core entities (User, Student, Tutor) with clear separation of concerns and object-oriented design |
-| `Student Class` | Derived from User class representing student users with student-specific properties and role identifier (role = 0) |
-| `Tutor Class` | Derived from User class representing tutor users with tutor-specific properties and role identifier (role = 1) |
+| Feature               | Description                                                                                                                              |
+|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| `User Class`          | Organized data models representing core entities (User, Student, Tutor) with clear separation of concerns and object-oriented design     |
+| `Student Class`       | Derived from User class representing student users with student-specific properties and role identifier (role = 0)                       |
+| `Tutor Class`         | Derived from User class representing tutor users with tutor-specific properties and role identifier (role = 1)                           |
 | `Role Identification` | System to distinguish between students (role 0) and tutors (role 1), enabling role-based access control and differentiated functionality |
-| `User Profile` | Capture and manage user information including name, email, password, and account creation timestamps |
-| `User Authentication` | Email and password-based authentication system for user verification and security |
-| `Login Session` | Session tracking for authenticated users, maintaining login state and user context during application runtime |
-| `Course Booking` | Manage and track tutoring sessions/appointments booked between students and tutors, including session scheduling and availability |
-| `Message System` | Inter-user messaging system enabling students and tutors to communicate, send queries, and exchange information |
+| `User Profile`        | Capture and manage user information including name, email, password, and account creation timestamps                                     |
+| `User Authentication` | Email and password-based authentication system for user verification and security                                                        |
+| `Login Session`       | Session tracking for authenticated users, maintaining login state and user context during application runtime                            |
+| `Course Booking`      | Manage and track tutoring sessions/appointments booked between students and tutors, including session scheduling and availability        |
+| `Course Management`   | Managing course detail in terms of course content, time slot, available spot, and tutor infomation                                       |
+| `Message System`      | Inter-user messaging system enabling students and tutors to communicate, send queries, and exchange information                          |
